@@ -39,12 +39,14 @@ func NewApi(redis *redis.Client, db db.DbI) *App {
 func (a *App) Run() {
 	r := mux.NewRouter()
 
+	r.HandleFunc("/health", a.healthCheck).Methods("GET")
+
 	r.HandleFunc("/channels", a.getChannels).Methods("GET")
 	r.HandleFunc("/channels/{channelName}/lastMessages", a.getChannelLastMessages).Methods("GET")
 
 	r.HandleFunc("/chat", a.chatWebSocketHandler).Methods("GET")
 
-	fmt.Println("serving")
+	fmt.Println("serving!")
 	log.Fatal(http.ListenAndServe(":8000", r))
 }
 
@@ -172,6 +174,14 @@ func (a *App) getChannelLastMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJSON(w, 200, messages)
+}
+
+type HealthMessage struct {
+	Message string `json:"message"`
+}
+
+func (a *App) healthCheck(w http.ResponseWriter, r *http.Request) {
+	respondWithJSON(w, 200, HealthMessage{Message: "Hi, I'm fine, and you?"})
 }
 
 func handleWSError(err error, conn *websocket.Conn) {
