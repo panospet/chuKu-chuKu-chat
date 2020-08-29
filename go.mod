@@ -8,6 +8,7 @@ require (
 	github.com/google/go-cmp v0.5.1 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
+	github.com/tjarratt/babble v0.0.0-20191209142150-eecdf8c2339d
 	golang.org/x/sys v0.0.0-20200615200032-f1bc736245b1 // indirect
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 )

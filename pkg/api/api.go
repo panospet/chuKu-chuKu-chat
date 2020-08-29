@@ -1,11 +1,14 @@
 package api
 
 import (
+	"chuKu-chuKu-chat/pkg/db"
+	"chuKu-chuKu-chat/pkg/model"
 	"chuKu-chuKu-chat/pkg/user"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/go-redis/redis/v7"
 	"github.com/gorilla/mux"
@@ -13,11 +16,12 @@ import (
 )
 
 type App struct {
-	upgrader       websocket.Upgrader
-	redis          *redis.Client
+	upgrader websocket.Upgrader
+	redis    *redis.Client
+	db       db.DbI
 }
 
-func NewApi(redis *redis.Client) *App {
+func NewApi(redis *redis.Client, db db.DbI) *App {
 	return &App{
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -28,6 +32,7 @@ func NewApi(redis *redis.Client) *App {
 			},
 		},
 		redis: redis,
+		db:    db,
 	}
 }
 
@@ -35,18 +40,24 @@ func (a *App) Run() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/channels", a.getChannels).Methods("GET")
+	r.HandleFunc("/channels/{channelName}/lastMessages", a.getChannelLastMessages).Methods("GET")
 
-	r.HandleFunc("/chat", a.ChatWebSocketHandler).Methods("GET")
+	r.HandleFunc("/chat", a.chatWebSocketHandler).Methods("GET")
 
 	fmt.Println("serving")
 	log.Fatal(http.ListenAndServe(":8000", r))
 }
 
 func (a *App) getChannels(w http.ResponseWriter, r *http.Request) {
-	respondWithJSON(w, 200, []string{"general"})
+	channels, err := a.db.GetChannels()
+	if err != nil {
+		respondWithError(w, 404, "channel does not exist")
+		return
+	}
+	respondWithJSON(w, 200, channels)
 }
 
-func (a *App) ChatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := a.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("ERROR during websocket handshake:", err)
@@ -103,7 +114,7 @@ func (a *App) onDisconnect(conn *websocket.Conn, u *user.User) chan struct{} {
 }
 
 func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client, u *user.User) error {
-	var msg Msg
+	var msg model.Msg
 
 	if err := conn.ReadJSON(&msg); err != nil {
 		handleWSError(err, conn)
@@ -125,14 +136,6 @@ type temp struct {
 	User    string
 }
 
-type Msg struct {
-	Content string `json:"content,omitempty"`
-	Channel string `json:"channel,omitempty"`
-	Command int    `json:"command,omitempty"`
-	Err     string `json:"err,omitempty"`
-	User    string `json:"user,omitempty"`
-}
-
 func (a *App) onChannelMessage(conn *websocket.Conn, u *user.User) {
 	go func() {
 		for m := range u.MessageChan {
@@ -142,7 +145,7 @@ func (a *App) onChannelMessage(conn *websocket.Conn, u *user.User) {
 			if err != nil {
 				fmt.Println("ERROR unmashalling message:", err)
 			}
-			msg := Msg{
+			msg := model.Msg{
 				Content: t.Content,
 				Channel: t.Channel,
 				User:    t.User,
@@ -155,8 +158,24 @@ func (a *App) onChannelMessage(conn *websocket.Conn, u *user.User) {
 	}()
 }
 
+func (a *App) getChannelLastMessages(w http.ResponseWriter, r *http.Request) {
+	channelName := mux.Vars(r)["channelName"]
+	amount, err := strconv.Atoi(r.URL.Query().Get("amount"))
+	if err != nil {
+		respondWithError(w, 400, "bad amount given")
+		return
+	}
+	messages, err := a.db.ChannelLastMessages(channelName, amount)
+	if err != nil {
+		// todo log error
+		respondWithError(w, 500, "an error occured")
+		return
+	}
+	respondWithJSON(w, 200, messages)
+}
+
 func handleWSError(err error, conn *websocket.Conn) {
-	_ = conn.WriteJSON(Msg{Err: err.Error()})
+	_ = conn.WriteJSON(model.Msg{Err: err.Error()})
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
