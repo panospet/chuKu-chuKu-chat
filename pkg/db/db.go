@@ -11,10 +11,15 @@ type DbI interface {
 	GetChannels() ([]model.Channel, error)
 	CreateChannel(name string, description string) error
 	DeleteChannel(name string) error
+
+	GetUser(name string) (model.User, error)
+	GetUsers() ([]model.User, error)
+	AddUser(user model.User) error
 }
 
 type DummyDb struct {
 	Channels map[string]model.Channel
+	Users    map[string]model.User
 }
 
 func NewDummyDb() *DummyDb {
@@ -26,7 +31,10 @@ func NewDummyDb() *DummyDb {
 		Name:        "metallica",
 		Description: "metallica discussion",
 	}
-	return &DummyDb{Channels: map[string]model.Channel{"general": g, "metallica": m}}
+	return &DummyDb{
+		Channels: map[string]model.Channel{"general": g, "metallica": m},
+		Users:    map[string]model.User{},
+	}
 }
 
 func (d *DummyDb) GetChannels() ([]model.Channel, error) {
@@ -58,5 +66,29 @@ func (d *DummyDb) DeleteChannel(name string) error {
 		return errors.New("channel does not exist")
 	}
 	delete(d.Channels, name)
+	return nil
+}
+
+func (d *DummyDb) GetUser(name string) (model.User, error) {
+	user, ok := d.Users[name]
+	if !ok {
+		return model.User{}, errors.New("user does not exist")
+	}
+	return user, nil
+}
+
+func (d *DummyDb) GetUsers() ([]model.User, error) {
+	var out []model.User
+	for _, u := range d.Users {
+		out = append(out, u)
+	}
+	return out, nil
+}
+
+func (d *DummyDb) AddUser(user model.User) error {
+	if _, ok := d.Users[user.Username]; ok {
+		return errors.New("user already exists")
+	}
+	d.Users[user.Username] = user
 	return nil
 }

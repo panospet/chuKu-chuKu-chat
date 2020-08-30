@@ -1,4 +1,4 @@
-package user
+package model
 
 import (
 	"errors"
@@ -13,6 +13,7 @@ type User struct {
 	StopListenerChan chan struct{}
 	//listening        bool
 	MessageChan chan redis.Message
+	channels    []string
 }
 
 func NewUser(username string) *User {
@@ -20,12 +21,19 @@ func NewUser(username string) *User {
 		Username:         username,
 		MessageChan:      make(chan redis.Message),
 		StopListenerChan: make(chan struct{}),
+		channels:         []string{"general"},
 	}
 }
 
 func (u *User) GetChannels() ([]string, error) {
-	// todo query db to get subscribed channels of user
-	return []string{"general"}, nil
+	// todo come from db
+	return u.channels, nil
+}
+
+func (u *User) SubscribeToChannel(channelName string) error {
+	// todo come from db
+	u.channels = append(u.channels, channelName)
+	return nil
 }
 
 func (u *User) Connect(rdb *redis.Client) error {

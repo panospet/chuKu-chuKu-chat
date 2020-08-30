@@ -1,9 +1,6 @@
 package api
 
 import (
-	"chuKu-chuKu-chat/pkg/db"
-	"chuKu-chuKu-chat/pkg/model"
-	"chuKu-chuKu-chat/pkg/user"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,6 +11,9 @@ import (
 	"github.com/go-redis/redis/v7"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+
+	"chuKu-chuKu-chat/pkg/db"
+	"chuKu-chuKu-chat/pkg/model"
 )
 
 type App struct {
@@ -48,6 +48,8 @@ func (a *App) Run() {
 	r.HandleFunc("/channels/{channelName}/lastMessages", a.getChannelLastMessages).Methods("GET")
 
 	r.HandleFunc("/users/{user}/channels", a.getUserChannels).Methods("GET")
+	r.HandleFunc("/users", a.getUsers).Methods("GET")
+	r.HandleFunc("/users/{user}", a.getUser).Methods("GET")
 
 	r.HandleFunc("/chat", a.chatWebSocketHandler).Methods("GET")
 
@@ -72,7 +74,13 @@ func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username := r.URL.Query()["username"][0]
-	u := user.NewUser(username)
+	u := model.NewUser(username)
+
+	err = a.db.AddUser(*u)
+	if err != nil {
+		handleWSError(err, conn)
+		return
+	}
 
 	err = a.onConnect(r, conn, a.redis, *u)
 	if err != nil {
@@ -95,7 +103,7 @@ loop:
 	}
 }
 
-func (a *App) onConnect(r *http.Request, conn *websocket.Conn, rdb *redis.Client, u user.User) error {
+func (a *App) onConnect(r *http.Request, conn *websocket.Conn, rdb *redis.Client, u model.User) error {
 	fmt.Println("connected from:", conn.RemoteAddr(), "user:", u.Username)
 	err := u.Connect(rdb)
 	if err != nil {
@@ -104,7 +112,7 @@ func (a *App) onConnect(r *http.Request, conn *websocket.Conn, rdb *redis.Client
 	return nil
 }
 
-func (a *App) onDisconnect(conn *websocket.Conn, u *user.User) chan struct{} {
+func (a *App) onDisconnect(conn *websocket.Conn, u *model.User) chan struct{} {
 	closeCh := make(chan struct{})
 
 	conn.SetCloseHandler(func(code int, text string) error {
@@ -120,7 +128,7 @@ func (a *App) onDisconnect(conn *websocket.Conn, u *user.User) chan struct{} {
 	return closeCh
 }
 
-func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client, u *user.User) error {
+func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client, u *model.User) error {
 	var msg model.Msg
 
 	if err := conn.ReadJSON(&msg); err != nil {
@@ -143,7 +151,7 @@ type temp struct {
 	User    string
 }
 
-func (a *App) onChannelMessage(conn *websocket.Conn, u *user.User) {
+func (a *App) onChannelMessage(conn *websocket.Conn, u *model.User) {
 	go func() {
 		for m := range u.MessageChan {
 			fmt.Println("RECEIVED CHANNEEL MESSAGE", m)
@@ -225,7 +233,44 @@ func (a *App) deleteChannel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) getUserChannels(w http.ResponseWriter, r *http.Request) {
+	username := mux.Vars(r)["user"]
+	user, err := a.db.GetUser(username)
+	if err != nil {
+		respondWithError(w, 400, "user not found")
+		return
+	}
+	chans, err := user.GetChannels()
+	if err != nil {
+		respondWithError(w, 500, "an error occured")
+		return
+	}
+	respondWithJSON(w, 200, chans)
+}
 
+type UserJson struct {
+	Name string `json:"name"`
+}
+
+func (a *App) getUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := a.db.GetUsers()
+	if err != nil {
+		respondWithError(w, 500, "an error occured")
+		return
+	}
+	var out []UserJson
+	for _, u := range users {
+		out = append(out, UserJson{Name: u.Username})
+	}
+	respondWithJSON(w, 200, out)
+}
+
+func (a *App) getUser(w http.ResponseWriter, r *http.Request) {
+	username := mux.Vars(r)["user"]
+	u, err := a.db.GetUser(username)
+	if err != nil {
+		respondWithError(w, 404, "user not found")
+	}
+	respondWithJSON(w, 200, u)
 }
 
 func handleWSError(err error, conn *websocket.Conn) {
