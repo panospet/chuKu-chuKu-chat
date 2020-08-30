@@ -32,9 +32,15 @@ if response is 200, you're good to go.
 }
 ```
 
-`DELETE /channels/{string}`
+`DELETE /channels/{channelName}`
 
 `GET /channels/{string}/lastMessages?amount={int}`
 
-`GET /chat?username={string}`
+`GET /chat?username={string}` for creating a user && a websockeet connection
+
+`GET /users`
+
+`GET /users/{username}`
+
+`GET /users/{username}/channels`
 
