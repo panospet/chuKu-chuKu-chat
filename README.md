@@ -22,6 +22,18 @@ if response is 200, you're good to go.
 
 `GET /channels`
 
+`POST /channels` with body: 
+
+```
+{
+  "name": "test channel", 
+  "description": "test discussion"  
+  "creator": "user1"
+}
+```
+
+`DELETE /channels/{string}`
+
 `GET /channels/{string}/lastMessages?amount={int}`
 
 `GET /chat?username={string}`

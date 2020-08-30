@@ -9,8 +9,8 @@ import (
 type DbI interface {
 	ChannelLastMessages(name string, amount int) ([]model.Msg, error)
 	GetChannels() ([]model.Channel, error)
-	//CreateChannel(c api.Channel) error
-	//DeleteChannel(name string) error
+	CreateChannel(name string, description string) error
+	DeleteChannel(name string) error
 }
 
 type DummyDb struct {
@@ -42,4 +42,21 @@ func (d *DummyDb) ChannelLastMessages(name string, amount int) ([]model.Msg, err
 		return []model.Msg{}, errors.New("channel does not exist")
 	}
 	return common.GenerateRandomMessages(name, amount), nil
+}
+
+func (d *DummyDb) CreateChannel(name string, description string) error {
+	c := model.Channel{
+		Name:        name,
+		Description: description,
+	}
+	d.Channels["name"] = c
+	return nil
+}
+
+func (d *DummyDb) DeleteChannel(name string) error {
+	if _, ok := d.Channels[name]; !ok {
+		return errors.New("channel does not exist")
+	}
+	delete(d.Channels, name)
+	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"chuKu-chuKu-chat/pkg/user"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -42,7 +43,11 @@ func (a *App) Run() {
 	r.HandleFunc("/health", a.healthCheck).Methods("GET")
 
 	r.HandleFunc("/channels", a.getChannels).Methods("GET")
+	r.HandleFunc("/channels", a.createChannel).Methods("POST")
+	r.HandleFunc("/channels/{channelName}", a.deleteChannel).Methods("DELETE")
 	r.HandleFunc("/channels/{channelName}/lastMessages", a.getChannelLastMessages).Methods("GET")
+
+	r.HandleFunc("/users/{user}/channels", a.getUserChannels).Methods("GET")
 
 	r.HandleFunc("/chat", a.chatWebSocketHandler).Methods("GET")
 
@@ -176,12 +181,51 @@ func (a *App) getChannelLastMessages(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 200, messages)
 }
 
-type HealthMessage struct {
+type SuccessMessage struct {
 	Message string `json:"message"`
 }
 
 func (a *App) healthCheck(w http.ResponseWriter, r *http.Request) {
-	respondWithJSON(w, 200, HealthMessage{Message: "Hi, I'm fine, and you?"})
+	respondWithJSON(w, 200, SuccessMessage{Message: "Hi, I'm fine, and you?"})
+}
+
+func (a *App) createChannel(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		respondWithError(w, 400, "failed to read request body")
+		return
+	}
+	var c model.Channel
+	err = json.Unmarshal(b, &c)
+	if err != nil {
+		respondWithError(w, 400, "failed to read request body")
+		return
+	}
+	err = a.db.CreateChannel(c.Name, c.Description)
+	if err != nil {
+		respondWithError(w, 500, "channel creation failure")
+		return
+	}
+	respondWithJSON(w, 201, SuccessMessage{Message: fmt.Sprintf("channel with name %s "+
+		"has been created successfully", c.Name)})
+}
+
+func (a *App) deleteChannel(w http.ResponseWriter, r *http.Request) {
+	channelName := mux.Vars(r)["channelName"]
+	if channelName == "" {
+		respondWithError(w, 400, "please give a valid channel name")
+		return
+	}
+	err := a.db.DeleteChannel(channelName)
+	if err != nil {
+		respondWithError(w, 500, "channel deletion failure")
+		return
+	}
+}
+
+func (a *App) getUserChannels(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func handleWSError(err error, conn *websocket.Conn) {
