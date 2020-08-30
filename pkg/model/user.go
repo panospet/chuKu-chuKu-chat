@@ -26,13 +26,16 @@ func NewUser(username string) *User {
 }
 
 func (u *User) GetChannels() ([]string, error) {
-	// todo come from db
+	// todo db action
 	return u.channels, nil
 }
 
-func (u *User) SubscribeToChannel(channelName string) error {
-	// todo come from db
+func (u *User) SubscribeToChannel(channelName string, rdb *redis.Client) error {
+	// todo db action
 	u.channels = append(u.channels, channelName)
+	if err := u.Connect(rdb); err != nil {
+		return errors.New(fmt.Sprintf("error during user connection: %s", err))
+	}
 	return nil
 }
 
@@ -42,7 +45,10 @@ func (u *User) Connect(rdb *redis.Client) error {
 	}
 
 	var c []string
-	c, _ = u.GetChannels()
+	c, err := u.GetChannels()
+	if err != nil {
+		return errors.New(fmt.Sprintf("error getting channels for user: %s", err))
+	}
 
 	if len(c) == 0 {
 		return errors.New(fmt.Sprintf("no channels for user %s", u.Username))

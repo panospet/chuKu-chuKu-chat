@@ -44,12 +44,13 @@ func (a *App) Run() {
 
 	r.HandleFunc("/channels", a.getChannels).Methods("GET")
 	r.HandleFunc("/channels", a.createChannel).Methods("POST")
+	r.HandleFunc("/channels/subscription", a.subscription).Methods("POST")
 	r.HandleFunc("/channels/{channelName}", a.deleteChannel).Methods("DELETE")
 	r.HandleFunc("/channels/{channelName}/lastMessages", a.getChannelLastMessages).Methods("GET")
 
-	r.HandleFunc("/users/{user}/channels", a.getUserChannels).Methods("GET")
 	r.HandleFunc("/users", a.getUsers).Methods("GET")
 	r.HandleFunc("/users/{user}", a.getUser).Methods("GET")
+	r.HandleFunc("/users/{user}/channels", a.getUserChannels).Methods("GET")
 
 	r.HandleFunc("/chat", a.chatWebSocketHandler).Methods("GET")
 
@@ -271,6 +272,33 @@ func (a *App) getUser(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 404, "user not found")
 	}
 	respondWithJSON(w, 200, u)
+}
+
+type Subscription struct {
+	User    string
+	Channel string
+}
+
+func (a *App) subscription(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		respondWithError(w, 400, "failed to read request body")
+		return
+	}
+	var s Subscription
+	err = json.Unmarshal(b, &s)
+	if err != nil {
+		respondWithError(w, 400, "failed to read request body")
+		return
+	}
+	err = a.db.Subscription(s.User, s.Channel, a.redis)
+	if err != nil {
+		respondWithError(w, 500, "an error occured")
+		return
+	}
+	respondWithJSON(w, 201, SuccessMessage{Message: fmt.Sprintf("User %s was subscribed to channel %s" +
+		" successfully", s.User, s.Channel)})
 }
 
 func handleWSError(err error, conn *websocket.Conn) {

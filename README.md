@@ -32,6 +32,15 @@ if response is 200, you're good to go.
 }
 ```
 
+`POST /channels/subscription` with body: 
+
+```
+{
+  "channel": "channel name"  
+  "user": "testuser"
+}
+```
+
 `DELETE /channels/{channelName}`
 
 `GET /channels/{string}/lastMessages?amount={int}`

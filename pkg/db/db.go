@@ -1,9 +1,12 @@
 package db
 
 import (
+	"errors"
+
+	"github.com/go-redis/redis/v7"
+
 	"chuKu-chuKu-chat/pkg/common"
 	"chuKu-chuKu-chat/pkg/model"
-	"errors"
 )
 
 type DbI interface {
@@ -15,6 +18,8 @@ type DbI interface {
 	GetUser(name string) (model.User, error)
 	GetUsers() ([]model.User, error)
 	AddUser(user model.User) error
+
+	Subscription(username string, channelName string, rdb *redis.Client) error
 }
 
 type DummyDb struct {
@@ -26,10 +31,12 @@ func NewDummyDb() *DummyDb {
 	g := model.Channel{
 		Name:        "general",
 		Description: "general discussion",
+		Creator:     "admin",
 	}
 	m := model.Channel{
 		Name:        "metallica",
 		Description: "metallica discussion",
+		Creator:     "admin",
 	}
 	return &DummyDb{
 		Channels: map[string]model.Channel{"general": g, "metallica": m},
@@ -90,5 +97,21 @@ func (d *DummyDb) AddUser(user model.User) error {
 		return errors.New("user already exists")
 	}
 	d.Users[user.Username] = user
+	return nil
+}
+
+func (d *DummyDb) Subscription(username string, channelName string, rdb *redis.Client) error {
+	u, ok := d.Users[username]
+	if !ok {
+		return errors.New("user does not exist")
+	}
+	_, ok = d.Channels[channelName]
+	if !ok {
+		return errors.New("channel does not exist")
+	}
+	err := u.SubscribeToChannel(channelName, rdb)
+	if err != nil {
+		return err
+	}
 	return nil
 }
