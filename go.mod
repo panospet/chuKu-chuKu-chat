@@ -6,6 +6,7 @@ require (
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-cmp v0.5.1 // indirect
+	github.com/gorilla/handlers v1.5.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/tjarratt/babble v0.0.0-20191209142150-eecdf8c2339d

@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/go-redis/redis/v7"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
@@ -54,8 +55,13 @@ func (a *App) Run() {
 
 	r.HandleFunc("/chat", a.chatWebSocketHandler).Methods("GET")
 
+	// todo configure allowed origins
+	//originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+
 	fmt.Println("serving!")
-	log.Fatal(http.ListenAndServe(":8000", r))
+	log.Fatal(http.ListenAndServe(":8000", handlers.CORS(originsOk, methodsOk)(r)))
 }
 
 func (a *App) getChannels(w http.ResponseWriter, r *http.Request) {
@@ -297,7 +303,7 @@ func (a *App) subscription(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 500, "an error occured")
 		return
 	}
-	respondWithJSON(w, 201, SuccessMessage{Message: fmt.Sprintf("User %s was subscribed to channel %s" +
+	respondWithJSON(w, 201, SuccessMessage{Message: fmt.Sprintf("User %s was subscribed to channel %s"+
 		" successfully", s.User, s.Channel)})
 }
 
