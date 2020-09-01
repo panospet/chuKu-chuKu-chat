@@ -12,7 +12,7 @@ import (
 type DbI interface {
 	ChannelLastMessages(name string, amount int) ([]model.Msg, error)
 	GetChannels() ([]model.Channel, error)
-	CreateChannel(name string, description string) error
+	CreateChannel(name string, description string, creator string) error
 	DeleteChannel(name string) error
 
 	GetUser(name string) (model.User, error)
@@ -60,10 +60,14 @@ func (d *DummyDb) ChannelLastMessages(name string, amount int) ([]model.Msg, err
 	return common.GenerateRandomMessages(name, amount), nil
 }
 
-func (d *DummyDb) CreateChannel(name string, description string) error {
+func (d *DummyDb) CreateChannel(name string, description string, creator string) error {
+	if _, ok := d.Users[creator]; !ok {
+		return errors.New("user does not exist")
+	}
 	c := model.Channel{
 		Name:        name,
 		Description: description,
+		Creator:     creator,
 	}
 	d.Channels["name"] = c
 	return nil

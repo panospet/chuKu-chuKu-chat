@@ -222,7 +222,7 @@ func (a *App) createChannel(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, err.Error())
 		return
 	}
-	err = a.db.CreateChannel(c.Name, c.Description)
+	err = a.db.CreateChannel(c.Name, c.Description, c.Creator)
 	if err != nil {
 		respondWithError(w, 500, "channel creation failure")
 		return
