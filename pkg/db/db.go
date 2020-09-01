@@ -12,7 +12,7 @@ import (
 type DbI interface {
 	ChannelLastMessages(name string, amount int) ([]model.Msg, error)
 	GetChannels() ([]model.Channel, error)
-	CreateChannel(name string, description string, creator string) error
+	CreateChannel(name string, description string, creator string, rdb *redis.Client) error
 	DeleteChannel(name string) error
 
 	GetUser(name string) (model.User, error)
@@ -60,8 +60,9 @@ func (d *DummyDb) ChannelLastMessages(name string, amount int) ([]model.Msg, err
 	return common.GenerateRandomMessages(name, amount), nil
 }
 
-func (d *DummyDb) CreateChannel(name string, description string, creator string) error {
-	if _, ok := d.Users[creator]; !ok {
+func (d *DummyDb) CreateChannel(name string, description string, creator string, rdb *redis.Client) error {
+	user, ok := d.Users[creator]
+	if !ok {
 		return errors.New("user does not exist")
 	}
 	c := model.Channel{
@@ -70,7 +71,7 @@ func (d *DummyDb) CreateChannel(name string, description string, creator string)
 		Creator:     creator,
 	}
 	d.Channels["name"] = c
-	return nil
+	return user.SubscribeToChannel(name, rdb)
 }
 
 func (d *DummyDb) DeleteChannel(name string) error {
