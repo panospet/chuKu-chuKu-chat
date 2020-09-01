@@ -18,6 +18,7 @@ type DbI interface {
 	GetUser(name string) (model.User, error)
 	GetUsers() ([]model.User, error)
 	AddUser(user model.User) error
+	RemoveUser(username string) error
 
 	Subscription(username string, channelName string, rdb *redis.Client) error
 }
@@ -97,6 +98,14 @@ func (d *DummyDb) AddUser(user model.User) error {
 		return errors.New("user already exists")
 	}
 	d.Users[user.Username] = user
+	return nil
+}
+
+func (d *DummyDb) RemoveUser(username string) error {
+	if _, ok := d.Users[username]; !ok {
+		return errors.New("user does not exist")
+	}
+	delete(d.Users, username)
 	return nil
 }
 

@@ -129,7 +129,8 @@ func (a *App) onDisconnect(conn *websocket.Conn, u *model.User) chan struct{} {
 			return err
 		}
 		close(closeCh)
-		return nil
+
+		return a.db.RemoveUser(u.Username)
 	})
 
 	return closeCh
