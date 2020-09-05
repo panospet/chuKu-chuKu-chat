@@ -1,11 +1,16 @@
 package model
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 type Channel struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Creator     string `json:"creator"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Creator     string    `json:"creator"`
+	IsPrivate   bool      `json:"is_private"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 func (c *Channel) Validate() error {
