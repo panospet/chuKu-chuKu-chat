@@ -11,7 +11,6 @@ type User struct {
 	Username         string
 	pubSub           *redis.PubSub
 	StopListenerChan chan struct{}
-	//listening        bool
 	MessageChan chan redis.Message
 	channels    []string
 }
@@ -39,6 +38,7 @@ func (u *User) SubscribeToChannel(channelName string, rdb *redis.Client) error {
 	return nil
 }
 
+// todo violation; needs to be moved elsewhere
 func (u *User) Connect(rdb *redis.Client) error {
 	if _, err := rdb.SAdd("useridia", u.Username).Result(); err != nil {
 		return err
@@ -83,13 +83,6 @@ func (u *User) Connect(rdb *redis.Client) error {
 			}
 		}
 	}()
-
-	//go func() {
-	//	fmt.Println("listening to received messages")
-	//	for msg := range u.MessageChan {
-	//		fmt.Println("user", u.Username, "received message", msg)
-	//	}
-	//}()
 
 	return nil
 }

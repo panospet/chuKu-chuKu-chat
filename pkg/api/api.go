@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-redis/redis/v7"
 	"github.com/gorilla/handlers"
@@ -20,10 +21,10 @@ import (
 type App struct {
 	upgrader websocket.Upgrader
 	redis    *redis.Client
-	db       db.DbI
+	db       db.OperationsI
 }
 
-func NewApi(redis *redis.Client, db db.DbI) *App {
+func NewApp(redis *redis.Client, db db.OperationsI) *App {
 	return &App{
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -81,23 +82,27 @@ func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username := r.URL.Query()["username"][0]
-	u := model.NewUser(username)
+	var u model.User
+	u, err = a.db.GetUser(username)
+	if err != nil {
+		newUser := model.NewUser(username)
+		err = a.db.AddUser(*newUser)
+		if err != nil {
+			handleWSError(err, conn)
+			return
+		}
+		u = *newUser
+	}
 
-	err = a.db.AddUser(*u)
+	err = a.onConnect(r, conn, a.redis, u)
 	if err != nil {
 		handleWSError(err, conn)
 		return
 	}
 
-	err = a.onConnect(r, conn, a.redis, *u)
-	if err != nil {
-		handleWSError(err, conn)
-		return
-	}
+	closeCh := a.onDisconnect(conn, &u)
 
-	closeCh := a.onDisconnect(conn, u)
-
-	a.onChannelMessage(conn, u)
+	a.onChannelMessage(conn, &u)
 
 loop:
 	for {
@@ -105,7 +110,7 @@ loop:
 		case <-closeCh:
 			break loop
 		default:
-			a.onUserCommand(conn, a.redis, u)
+			a.onUserCommand(conn, a.redis)
 		}
 	}
 }
@@ -123,22 +128,23 @@ func (a *App) onDisconnect(conn *websocket.Conn, u *model.User) chan struct{} {
 	closeCh := make(chan struct{})
 
 	conn.SetCloseHandler(func(code int, text string) error {
-		fmt.Println("connection closed for user", u.Username)
+		fmt.Println("closing connection for user", u.Username)
 
 		if err := u.Disconnect(); err != nil {
 			return err
 		}
 		close(closeCh)
 
-		return a.db.RemoveUser(u.Username)
+		//return a.db.RemoveUser(u.Username)
+		return nil
 	})
-
+	fmt.Println("connection closed for user", u.Username)
 	return closeCh
 }
 
-func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client, u *model.User) error {
+func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client) error {
 	var msg model.Msg
-
+	msg.Timestamp = time.Now()
 	if err := conn.ReadJSON(&msg); err != nil {
 		handleWSError(err, conn)
 		return err
@@ -169,9 +175,10 @@ func (a *App) onChannelMessage(conn *websocket.Conn, u *model.User) {
 				fmt.Println("ERROR unmashalling message:", err)
 			}
 			msg := model.Msg{
-				Content: t.Content,
-				Channel: t.Channel,
-				User:    t.User,
+				Content:   t.Content,
+				Channel:   t.Channel,
+				User:      t.User,
+				Timestamp: time.Now(),
 			}
 			if err := conn.WriteJSON(msg); err != nil {
 				fmt.Println(err)
