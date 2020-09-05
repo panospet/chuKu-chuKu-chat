@@ -10,7 +10,7 @@ import (
 	"github.com/go-redis/redis/v7"
 	"github.com/gorilla/websocket"
 
-	"chuKu-chuKu-chat/pkg/model"
+	"chuKu-chuKu-chat/internal/model"
 )
 
 func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -102,9 +102,11 @@ func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client) error {
 }
 
 type temp struct {
-	Content string
-	Channel string
-	User    string
+	Content   string    `json:"content"`
+	Channel   string    `json:"channel"`
+	User      string    `json:"user"`
+	Command   int       `json:"command"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 func (a *App) onChannelMessage(conn *websocket.Conn, u *model.User) {
@@ -120,7 +122,7 @@ func (a *App) onChannelMessage(conn *websocket.Conn, u *model.User) {
 				Content:   t.Content,
 				Channel:   t.Channel,
 				User:      t.User,
-				Timestamp: time.Now(),
+				Timestamp: t.Timestamp,
 			}
 			if err := conn.WriteJSON(msg); err != nil {
 				fmt.Println(err)

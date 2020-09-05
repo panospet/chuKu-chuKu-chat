@@ -6,7 +6,7 @@ import (
 
 	"github.com/tjarratt/babble"
 
-	"chuKu-chuKu-chat/pkg/model"
+	"chuKu-chuKu-chat/internal/model"
 )
 
 func GenerateRandomMessages(channelName string, amount int) []model.Msg {

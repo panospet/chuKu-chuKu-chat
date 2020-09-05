@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v7"
 
-	"chuKu-chuKu-chat/pkg/common"
-	"chuKu-chuKu-chat/pkg/model"
+	"chuKu-chuKu-chat/internal/common"
+	"chuKu-chuKu-chat/internal/model"
 )
 
 type OperationsI interface {

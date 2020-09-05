@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/go-redis/redis/v7"
 
-	"chuKu-chuKu-chat/pkg/api"
-	db2 "chuKu-chuKu-chat/pkg/db"
+	"chuKu-chuKu-chat/internal/api"
+	db2 "chuKu-chuKu-chat/internal/db"
 )
 
 func main() {

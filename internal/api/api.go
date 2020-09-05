@@ -13,8 +13,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
-	"chuKu-chuKu-chat/pkg/db"
-	"chuKu-chuKu-chat/pkg/model"
+	"chuKu-chuKu-chat/internal/db"
+	"chuKu-chuKu-chat/internal/model"
 )
 
 type App struct {
