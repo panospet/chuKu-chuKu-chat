@@ -20,7 +20,6 @@ func NewUser(username string) *User {
 		Username:         username,
 		MessageChan:      make(chan redis.Message),
 		StopListenerChan: make(chan struct{}),
-		channels:         []string{"general"},
 	}
 }
 

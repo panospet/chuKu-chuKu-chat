@@ -35,13 +35,14 @@ func NewDummyOperations(rdb *redis.Client) (*DummyOperations, error) {
 		Description: "general discussion",
 		Creator:     "admin",
 	}
+	var err error
 	m := model.Channel{
 		Name:        "metallica",
 		Description: "metallica discussion",
 		Creator:     "admin",
 	}
 	u := model.NewUser("admin")
-	err := u.SubscribeToChannel("metallica", rdb)
+	err = u.SubscribeToChannel("metallica", rdb)
 	if err != nil {
 		return nil, nil
 	}
