@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"github.com/go-redis/redis/v7"
 
 	"chuKu-chuKu-chat/pkg/common"
@@ -42,11 +43,9 @@ func NewDummyOperations(rdb *redis.Client) (*DummyOperations, error) {
 		Creator:     "admin",
 	}
 	u := model.NewUser("admin")
-	err = u.SubscribeToChannel("metallica", rdb)
-	if err != nil {
-		return nil, nil
-	}
-	err = u.SubscribeToChannel("general", rdb)
+	u.AddChannel("metallica")
+	u.AddChannel("general")
+	err = u.RefreshChannels(rdb)
 	if err != nil {
 		return nil, nil
 	}
@@ -80,6 +79,14 @@ func (d *DummyOperations) ChannelLastMessages(name string, amount int) ([]model.
 	return common.GenerateRandomMessages(name, amount), nil
 }
 
+type ErrChannelAlreadyExists struct {
+	ChannelName string
+}
+
+func (e ErrChannelAlreadyExists) Error() string {
+	return fmt.Sprintf("Channel with name '%s' already exists", e.ChannelName)
+}
+
 func (d *DummyOperations) CreateChannel(name string, description string, creator string) error {
 	user, ok := d.Users[creator]
 	if !ok {
@@ -90,8 +97,12 @@ func (d *DummyOperations) CreateChannel(name string, description string, creator
 		Description: description,
 		Creator:     creator,
 	}
-	d.Channels["name"] = c
-	return user.SubscribeToChannel(name, d.rdb)
+	if _, ok := d.Channels[name]; ok {
+		return ErrChannelAlreadyExists{ChannelName: name}
+	}
+	d.Channels[name] = c
+	user.AddChannel(c.Name)
+	return user.RefreshChannels(d.rdb)
 }
 
 func (d *DummyOperations) DeleteChannel(name string) error {
@@ -143,7 +154,8 @@ func (d *DummyOperations) Subscription(username string, channelName string) erro
 	if !ok {
 		return errors.New("channel does not exist")
 	}
-	err := u.SubscribeToChannel(channelName, d.rdb)
+	u.AddChannel(channelName)
+	err := u.RefreshChannels(d.rdb)
 	if err != nil {
 		return err
 	}

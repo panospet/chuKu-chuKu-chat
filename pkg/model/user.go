@@ -11,8 +11,8 @@ type User struct {
 	Username         string
 	pubSub           *redis.PubSub
 	StopListenerChan chan struct{}
-	MessageChan chan redis.Message
-	channels    []string
+	MessageChan      chan redis.Message
+	channels         []string
 }
 
 func NewUser(username string) *User {
@@ -20,25 +20,37 @@ func NewUser(username string) *User {
 		Username:         username,
 		MessageChan:      make(chan redis.Message),
 		StopListenerChan: make(chan struct{}),
+		channels:         []string{"general"},
 	}
 }
 
 func (u *User) GetChannels() ([]string, error) {
-	// todo db action
 	return u.channels, nil
 }
 
-func (u *User) SubscribeToChannel(channelName string, rdb *redis.Client) error {
-	// todo db action
-	u.channels = append(u.channels, channelName)
-	if err := u.Connect(rdb); err != nil {
+func (u *User) AddChannel(channelName string) bool {
+	alreadyExists := false
+	for _, c := range u.channels {
+		if c == channelName {
+			alreadyExists = true
+			break
+		}
+	}
+	if !alreadyExists {
+		u.channels = append(u.channels, channelName)
+	}
+	return alreadyExists
+}
+
+func (u *User) RefreshChannels(rdb *redis.Client) error {
+	if err := u.ConnectToPubSub(rdb); err != nil {
 		return errors.New(fmt.Sprintf("error during user connection: %s", err))
 	}
 	return nil
 }
 
 // todo violation; needs to be moved elsewhere
-func (u *User) Connect(rdb *redis.Client) error {
+func (u *User) ConnectToPubSub(rdb *redis.Client) error {
 	if _, err := rdb.SAdd("useridia", u.Username).Result(); err != nil {
 		return err
 	}
@@ -64,7 +76,7 @@ func (u *User) Connect(rdb *redis.Client) error {
 	}
 
 	u.pubSub = rdb.Subscribe(c...)
-	fmt.Println("subscribed to pubsub for channels", c)
+	fmt.Println("user", u.Username, "subscribed to pubsub for channels", c)
 
 	go func() {
 		fmt.Println("started listening to pubsub channels")
