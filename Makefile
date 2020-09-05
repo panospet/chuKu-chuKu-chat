@@ -57,3 +57,11 @@ migrate-down: ## revert database to the last migration step
 migrate-new: ## create a new database migration
 	@read -p "Enter the name of the new migration: " name; \
 	$(MIGRATE_CREATE) $${name}
+
+.PHONY: redis-start
+redis-start: ## start redis (no persistence)
+	docker run --rm --name chuku-redis -d -p 6379:6379 redis
+
+.PHONY: redis-stop
+redis-stop: ## stop redis (no persistence)
+	docker stop chuku-redis
