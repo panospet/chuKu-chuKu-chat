@@ -1,0 +1,2 @@
+dsn: "postgres://127.0.0.1/chukudb?sslmode=disable&user=postgres&password=password"
+port: 8000
