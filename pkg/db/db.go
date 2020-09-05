@@ -11,7 +11,7 @@ import (
 type OperationsI interface {
 	ChannelLastMessages(name string, amount int) ([]model.Msg, error)
 	GetChannels() ([]model.Channel, error)
-	CreateChannel(name string, description string, creator string, rdb *redis.Client) error
+	CreateChannel(name string, description string, creator string) error
 	DeleteChannel(name string) error
 	GetChannel(name string) (model.Channel, error)
 
@@ -20,7 +20,7 @@ type OperationsI interface {
 	AddUser(user model.User) error
 	RemoveUser(username string) error
 
-	Subscription(username string, channelName string, rdb *redis.Client) error
+	Subscription(username string, channelName string) error
 }
 
 type DummyOperations struct {
@@ -52,6 +52,7 @@ func NewDummyOperations(rdb *redis.Client) (*DummyOperations, error) {
 	return &DummyOperations{
 		Channels: map[string]model.Channel{"general": g, "metallica": m},
 		Users:    map[string]model.User{u.Username: *u},
+		rdb:      rdb,
 	}, nil
 }
 
@@ -78,7 +79,7 @@ func (d *DummyOperations) ChannelLastMessages(name string, amount int) ([]model.
 	return common.GenerateRandomMessages(name, amount), nil
 }
 
-func (d *DummyOperations) CreateChannel(name string, description string, creator string, rdb *redis.Client) error {
+func (d *DummyOperations) CreateChannel(name string, description string, creator string) error {
 	user, ok := d.Users[creator]
 	if !ok {
 		return errors.New("user does not exist")
@@ -89,7 +90,7 @@ func (d *DummyOperations) CreateChannel(name string, description string, creator
 		Creator:     creator,
 	}
 	d.Channels["name"] = c
-	return user.SubscribeToChannel(name, rdb)
+	return user.SubscribeToChannel(name, d.rdb)
 }
 
 func (d *DummyOperations) DeleteChannel(name string) error {
@@ -132,7 +133,7 @@ func (d *DummyOperations) RemoveUser(username string) error {
 	return nil
 }
 
-func (d *DummyOperations) Subscription(username string, channelName string, rdb *redis.Client) error {
+func (d *DummyOperations) Subscription(username string, channelName string) error {
 	u, ok := d.Users[username]
 	if !ok {
 		return errors.New("user does not exist")
@@ -141,7 +142,7 @@ func (d *DummyOperations) Subscription(username string, channelName string, rdb 
 	if !ok {
 		return errors.New("channel does not exist")
 	}
-	err := u.SubscribeToChannel(channelName, rdb)
+	err := u.SubscribeToChannel(channelName, d.rdb)
 	if err != nil {
 		return err
 	}

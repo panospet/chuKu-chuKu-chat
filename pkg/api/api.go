@@ -229,7 +229,7 @@ func (a *App) createChannel(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, err.Error())
 		return
 	}
-	err = a.db.CreateChannel(c.Name, c.Description, c.Creator, a.redis)
+	err = a.db.CreateChannel(c.Name, c.Description, c.Creator)
 	if err != nil {
 		respondWithError(w, 500, "channel creation failure")
 		return
@@ -310,7 +310,7 @@ func (a *App) subscription(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, "failed to read request body")
 		return
 	}
-	err = a.db.Subscription(s.User, s.Channel, a.redis)
+	err = a.db.Subscription(s.User, s.Channel)
 	if err != nil {
 		respondWithError(w, 500, "an error occured")
 		return
