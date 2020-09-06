@@ -19,15 +19,6 @@ run: ## run the app
 	go generate cmd/app/main.go
 	go run -tags=jsoniter cmd/app/main.go
 
-
-.PHONY: docker-build
-docker-build:  ## build the API server docker image
-	docker build -t job-portal-server --build-arg SSH_PRIVATE_KEY="$$(cat ~/.ssh/id_rsa)" --no-cache .
-
-.PHONY: docker-run
-docker-run:  ## runs the API server docker image
-	docker run --net host -v ${CWD}/config:/config -e CONFIG_PATH=/config/local.yml job-portal-server
-
 .PHONY: db-start
 db-start: ## start the database server
 	@mkdir -p testdata/postgres
@@ -37,7 +28,7 @@ db-start: ## start the database server
 
 .PHONY: db-stop
 db-stop: ## stop the database server
-	docker stop jobdb
+	docker stop chukudb
 
 .PHONY: db-login
 db-login: ## login to the database
