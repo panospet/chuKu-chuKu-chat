@@ -1,0 +1,1 @@
+alter table user_to_channel drop constraint user_to_channel_user_id_channel_id_key;

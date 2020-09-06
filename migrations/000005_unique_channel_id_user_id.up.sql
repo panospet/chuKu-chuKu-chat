@@ -1,0 +1,1 @@
+ALTER TABLE user_to_channel ADD UNIQUE (user_id, channel_id);

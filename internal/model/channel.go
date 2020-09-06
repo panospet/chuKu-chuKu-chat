@@ -6,11 +6,12 @@ import (
 )
 
 type Channel struct {
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Creator     string    `json:"creator"`
-	IsPrivate   bool      `json:"is_private"`
-	CreatedAt   time.Time `json:"created_at"`
+	Id          int       `json:"id" db:"id"`
+	Name        string    `json:"name" db:"name"`
+	Description string    `json:"description" db:"description"`
+	Creator     string    `json:"creator" db:"creator"`
+	IsPrivate   bool      `json:"is_private" db:"is_private"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
 
 func (c *Channel) Validate() error {

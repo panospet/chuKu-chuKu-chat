@@ -5,27 +5,32 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v7"
 	"log"
+	"time"
 )
 
 type User struct {
-	Username         string
+	Id               int    `db:"id"`
+	Username         string `db:"name"`
 	pubSub           *redis.PubSub
 	StopListenerChan chan struct{}
 	MessageChan      chan redis.Message
 	channels         []string
+	CreatedAt        time.Time `db:"created_at"`
 }
 
-func NewUser(username string) *User {
+func NewUser(username string, channels ...string) *User {
+	channels = append(channels, "general")
 	return &User{
 		Username:         username,
 		MessageChan:      make(chan redis.Message),
 		StopListenerChan: make(chan struct{}),
-		channels:         []string{"general"},
+		channels:         channels,
+		CreatedAt:        time.Now(),
 	}
 }
 
-func (u *User) GetChannels() ([]string, error) {
-	return u.channels, nil
+func (u *User) GetChannels() []string {
+	return u.channels
 }
 
 func (u *User) AddChannel(channelName string) bool {
@@ -55,12 +60,7 @@ func (u *User) ConnectToPubSub(rdb *redis.Client) error {
 		return err
 	}
 
-	var c []string
-	c, err := u.GetChannels()
-	if err != nil {
-		return errors.New(fmt.Sprintf("error getting channels for user: %s", err))
-	}
-
+	c := u.GetChannels()
 	if len(c) == 0 {
 		return errors.New(fmt.Sprintf("no channels for user %s", u.Username))
 	}

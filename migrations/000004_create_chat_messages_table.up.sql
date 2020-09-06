@@ -1,5 +1,5 @@
 CREATE TABLE chat_messages(
-   id SERIAL PRIMARY KEY,
+   id VARCHAR(36) NOT NULL PRIMARY KEY,
    user_id INT NOT NULL,
    channel_id INT NOT NULL,
    content TEXT,

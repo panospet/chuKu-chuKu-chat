@@ -1,6 +1,7 @@
 package common
 
 import (
+	"github.com/google/uuid"
 	"math/rand"
 	"time"
 
@@ -18,10 +19,11 @@ func GenerateRandomMessages(channelName string, amount int) []model.Msg {
 	for i := 0; i < amount; i++ {
 		babbler.Count = rand.Intn(6) + 1
 		output = append(output, model.Msg{
-			Content: babbler.Babble(),
-			Channel: channelName,
-			Command: 0,
-			User:    randomUsers[rand.Intn(5)],
+			Id:        uuid.New().String(),
+			Content:   babbler.Babble(),
+			Channel:   channelName,
+			Command:   0,
+			User:      randomUsers[rand.Intn(5)],
 			Timestamp: time.Now(),
 		})
 	}

@@ -4,7 +4,7 @@ import (
 	"github.com/go-redis/redis/v7"
 
 	"chuKu-chuKu-chat/internal/api"
-	db2 "chuKu-chuKu-chat/internal/db"
+	"chuKu-chuKu-chat/internal/operations"
 )
 
 func main() {
@@ -13,10 +13,10 @@ func main() {
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
-	db, err := db2.NewDummyOperations(rdb)
+	dummOp, err := operations.NewDummyOperator(rdb)
 	if err != nil {
 		panic(err)
 	}
-	app := api.NewApp(rdb, db)
+	app := api.NewApp(rdb, dummOp)
 	app.Run()
 }

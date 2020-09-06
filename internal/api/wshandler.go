@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v7"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 
 	"chuKu-chuKu-chat/internal/model"
@@ -21,10 +22,10 @@ func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.URL.Query()["username"][0]
 	var u model.User
-	u, err = a.db.GetUser(username)
+	u, err = a.operator.GetUser(username)
 	if err != nil {
 		newUser := model.NewUser(username)
-		err = a.db.AddUser(*newUser)
+		err = a.operator.AddUser(*newUser)
 		if err != nil {
 			handleWSError(err, conn)
 			return
@@ -77,7 +78,7 @@ func (a *App) onDisconnect(conn *websocket.Conn, u *model.User) chan struct{} {
 		}
 		close(closeCh)
 
-		return a.db.RemoveUser(u.Username)
+		return a.operator.RemoveUser(u.Username)
 		//return nil
 	})
 	fmt.Println("connection closed for user", u.Username)
@@ -91,12 +92,20 @@ func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client) error {
 		handleWSError(err, conn)
 		return err
 	}
+	msg.Id = uuid.New().String()
 	msgB, err := json.Marshal(msg)
 	if err != nil {
 		fmt.Println("ERROR CHAT:", err)
 		return err
 	}
 	fmt.Println("Chat function with msg:", string(msgB))
+
+	go func() {
+		err := a.operator.AddMessage(msg)
+		if err != nil {
+			fmt.Println("ERROR: could not store message")
+		}
+	}()
 
 	return rdb.Publish(msg.Channel, string(msgB)).Err()
 }
