@@ -114,7 +114,7 @@ func (a *App) createChannel(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, err.Error())
 		return
 	}
-	err = a.operator.AddChannel(c.Name, c.Description, c.Creator)
+	err = a.operator.AddChannel(c)
 	if err != nil {
 		if er, ok := err.(operations.ErrChannelAlreadyExists); ok {
 			fmt.Println("CONFLICTAKI")
