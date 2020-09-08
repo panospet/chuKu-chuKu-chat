@@ -14,23 +14,30 @@ import (
 
 type PostgresDb struct {
 	Conn *sqlx.DB
+	rdb  *redis.Client
 }
 
-func NewPostgresDb(dbPath string) (*PostgresDb, error) {
+func NewPostgresDb(dbPath string, rdb *redis.Client) (*PostgresDb, error) {
 	db, err := sqlx.Connect("postgres", dbPath)
 	if err != nil {
 		return &PostgresDb{}, err
 	}
-	return &PostgresDb{Conn: db}, nil
+	return &PostgresDb{Conn: db, rdb: rdb}, nil
 }
 
 func (o *PostgresDb) AddChannel(ch model.Channel) error {
+	user, err := o.GetUser(ch.Creator)
+	if err != nil {
+		return errors.New("user does not exist")
+	}
+
 	q := `insert into channels (name,creator,description,is_private) values($1,$2,$3,$4)`
-	_, err := o.Conn.Exec(q, ch.Name, ch.Creator, ch.Description, ch.IsPrivate)
+	_, err = o.Conn.Exec(q, ch.Name, ch.Creator, ch.Description, ch.IsPrivate)
 	if err != nil {
 		return err
 	}
-	return nil
+	user.AddChannel(ch.Name)
+	return user.RefreshChannels(o.rdb)
 }
 
 func (o *PostgresDb) ChannelLastMessages(channelName string, amount int) ([]model.Msg, error) {
@@ -59,7 +66,14 @@ users.id=chat_messages.user_id where channel_id=$1 order by sent_at desc limit $
 		}
 		messages = append(messages, m)
 	}
-	return messages, nil
+	return reverseMessages(messages), nil
+}
+
+func reverseMessages(messages []model.Msg) []model.Msg {
+	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
+		messages[i], messages[j] = messages[j], messages[i]
+	}
+	return messages
 }
 
 func (o *PostgresDb) GetChannels() ([]model.Channel, error) {
@@ -210,7 +224,8 @@ func (o *PostgresDb) AddSubscription(username string, channelName string) error 
 	if _, err := o.Conn.Exec(q, u.Id, c.Id); err != nil {
 		return err
 	}
-	return nil
+	u.AddChannel(channelName)
+	return u.RefreshChannels(o.rdb)
 }
 
 func (o *PostgresDb) AddMessage(m model.Msg) error {

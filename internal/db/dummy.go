@@ -32,9 +32,9 @@ func NewDummyDb(rdb *redis.Client) (*DummyDb, error) {
 	u.AddChannel("general")
 	err = u.RefreshChannels(rdb)
 	if err != nil {
-		return nil, nil
+		return nil, errors.New("error refreshing channels: " + err.Error())
 	}
-	msgs := common.GenerateRandomMessages("general", 3)
+	msgs := common.GenerateRandomMessages("general", 3, "admin")
 	return &DummyDb{
 		Channels: map[string]model.Channel{"general": g, "metallica": m},
 		Users:    map[string]model.User{u.Username: *u},
@@ -143,9 +143,5 @@ func (d *DummyDb) AddSubscription(username string, channelName string) error {
 		return errors.New("channel does not exist")
 	}
 	u.AddChannel(channelName)
-	err := u.RefreshChannels(d.rdb)
-	if err != nil {
-		return err
-	}
-	return nil
+	return u.RefreshChannels(d.rdb)
 }
