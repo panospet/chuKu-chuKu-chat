@@ -78,8 +78,7 @@ func (a *App) onDisconnect(conn *websocket.Conn, u *model.User) chan struct{} {
 		}
 		close(closeCh)
 
-		return a.db.RemoveUser(u.Username)
-		//return nil
+		return nil
 	})
 	fmt.Println("connection closed for user", u.Username)
 	return closeCh
