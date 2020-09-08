@@ -9,12 +9,14 @@ CREATE TABLE chat_messages(
 ALTER TABLE chat_messages
  ADD CONSTRAINT fk_chat_messages_channel_id
  FOREIGN KEY (channel_id)
- REFERENCES channels (id);
+ REFERENCES channels (id)
+ ON DELETE CASCADE;
 
  ALTER TABLE chat_messages
  ADD CONSTRAINT fk_chat_messages_user_id
  FOREIGN KEY (user_id)
- REFERENCES users (id);
+ REFERENCES users (id)
+ ON DELETE CASCADE;
 
 CREATE INDEX idx_chat_message_sent_at ON chat_messages (sent_at);
 CREATE INDEX idx_chat_message_user_id ON chat_messages (user_id);

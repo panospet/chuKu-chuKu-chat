@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -67,7 +68,7 @@ func (a *App) Run() {
 func (a *App) getChannels(w http.ResponseWriter, r *http.Request) {
 	channels, err := a.db.GetChannels()
 	if err != nil {
-		respondWithError(w, 404, "channel does not exist")
+		respondWithError(w, 404, "no channels found")
 		return
 	}
 	respondWithJSON(w, 200, channels)
@@ -161,11 +162,7 @@ func (a *App) getUsers(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 500, "an error occured")
 		return
 	}
-	var out []UserJson
-	for _, u := range users {
-		out = append(out, UserJson{Name: u.Username})
-	}
-	respondWithJSON(w, 200, out)
+	respondWithJSON(w, 200, users)
 }
 
 func (a *App) getUser(w http.ResponseWriter, r *http.Request) {
@@ -212,10 +209,13 @@ func respondWithError(w http.ResponseWriter, code int, message string) {
 	respondWithJSON(w, code, map[string]string{"error": message})
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
-
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) error {
+	response, err := json.Marshal(payload)
+	if err != nil {
+		return errors.New(fmt.Sprintf("error unmashaling: %s", err))
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(response)
+	return nil
 }

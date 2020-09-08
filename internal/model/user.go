@@ -9,17 +9,26 @@ import (
 )
 
 type User struct {
-	Id               int    `db:"id"`
-	Username         string `db:"name"`
-	pubSub           *redis.PubSub
-	StopListenerChan chan struct{}
-	MessageChan      chan redis.Message
-	Channels         []string
-	CreatedAt        time.Time `db:"created_at"`
+	Id        int       `json:"id" db:"id"`
+	Username  string    `json:"name" db:"name"`
+	Channels  []string  `json:"channels"`
+	CreatedAt time.Time `json:"createdAt" db:"created_at"`
+
+	pubSub           *redis.PubSub      `json:"-"`
+	StopListenerChan chan struct{}      `json:"-"`
+	MessageChan      chan redis.Message `json:"-"`
 }
 
 func NewUser(username string, channels ...string) *User {
-	channels = append(channels, "general")
+	generalExists := false
+	for _, ch := range channels {
+		if ch == "general" {
+			generalExists = true
+		}
+	}
+	if !generalExists {
+		channels = append(channels, "general")
+	}
 	return &User{
 		Username:         username,
 		MessageChan:      make(chan redis.Message),

@@ -10,9 +10,8 @@ import (
 	"chuKu-chuKu-chat/internal/model"
 )
 
-func GenerateRandomMessages(channelName string, amount int) []model.Msg {
+func GenerateRandomMessages(channelName string, amount int, users ...string) []model.Msg {
 	babbler := babble.NewBabbler()
-	randomUsers := []string{"panos", "odi", "steve", "pitsikokos", "mario"}
 	babbler.Separator = " "
 	rand.Seed(time.Now().UnixNano())
 	var output []model.Msg
@@ -23,7 +22,7 @@ func GenerateRandomMessages(channelName string, amount int) []model.Msg {
 			Content:   babbler.Babble(),
 			Channel:   channelName,
 			Command:   0,
-			User:      randomUsers[rand.Intn(5)],
+			User:      users[rand.Intn(len(users))],
 			Timestamp: time.Now(),
 		})
 	}

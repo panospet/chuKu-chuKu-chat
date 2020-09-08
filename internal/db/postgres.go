@@ -12,19 +12,19 @@ import (
 	"chuKu-chuKu-chat/internal/model"
 )
 
-type AppDb struct {
+type PostgresDb struct {
 	Conn *sqlx.DB
 }
 
-func NewDb(dbPath string) (*AppDb, error) {
+func NewPostgresDb(dbPath string) (*PostgresDb, error) {
 	db, err := sqlx.Connect("postgres", dbPath)
 	if err != nil {
-		return &AppDb{}, err
+		return &PostgresDb{}, err
 	}
-	return &AppDb{Conn: db}, nil
+	return &PostgresDb{Conn: db}, nil
 }
 
-func (o *AppDb) AddChannel(ch model.Channel) error {
+func (o *PostgresDb) AddChannel(ch model.Channel) error {
 	q := `insert into channels (name,creator,description,is_private) values($1,$2,$3,$4)`
 	_, err := o.Conn.Exec(q, ch.Name, ch.Creator, ch.Description, ch.IsPrivate)
 	if err != nil {
@@ -33,7 +33,7 @@ func (o *AppDb) AddChannel(ch model.Channel) error {
 	return nil
 }
 
-func (o *AppDb) ChannelLastMessages(channelName string, amount int) ([]model.Msg, error) {
+func (o *PostgresDb) ChannelLastMessages(channelName string, amount int) ([]model.Msg, error) {
 	c, err := o.GetChannel(channelName)
 	if err != nil {
 		return nil, err
@@ -61,14 +61,36 @@ users.id=chat_messages.user_id where channel_id=$1 order by sent_at desc limit $
 	}
 	return messages, nil
 }
-func (o *AppDb) GetChannels() ([]model.Channel, error) {
-	return nil, errors.New("not implemented")
-}
-func (o *AppDb) DeleteChannel(name string) error {
-	return errors.New("not implemented")
+
+func (o *PostgresDb) GetChannels() ([]model.Channel, error) {
+	q := `select id,name,creator,description,is_private,created_at from channels`
+	rows, err := o.Conn.Queryx(q)
+	if err != nil {
+		fmt.Println("error while trying query", err)
+		return nil, err
+	}
+	var out []model.Channel
+	for rows.Next() {
+		var c model.Channel
+		if err := rows.StructScan(&c); err != nil {
+			fmt.Println("error while scanning", err)
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, nil
 }
 
-func (o *AppDb) GetChannel(name string) (model.Channel, error) {
+func (o *PostgresDb) DeleteChannel(name string) error {
+	q := "delete from channels where name=$1"
+	if _, err := o.Conn.Exec(q, name); err != nil {
+		fmt.Println("error executing delete", err)
+		return err
+	}
+	return nil
+}
+
+func (o *PostgresDb) GetChannel(name string) (model.Channel, error) {
 	q := `select id,name,creator,description,is_private,created_at from channels where name=$1`
 	row := o.Conn.QueryRowx(q, name)
 	var c model.Channel
@@ -79,7 +101,7 @@ func (o *AppDb) GetChannel(name string) (model.Channel, error) {
 	return c, nil
 }
 
-func (o *AppDb) AddUser(user model.User) error {
+func (o *PostgresDb) AddUser(user model.User) error {
 	tx, err := o.Conn.Beginx()
 	if err != nil {
 		return err
@@ -116,7 +138,7 @@ func (o *AppDb) AddUser(user model.User) error {
 	return tx.Commit()
 }
 
-func (o *AppDb) GetUser(name string) (model.User, error) {
+func (o *PostgresDb) GetUser(name string) (model.User, error) {
 	q := `select u.id,u.name,u.created_at, array(select name from channels ch join user_to_channel utc on 
 utc.channel_id=ch.id and utc.user_id=u.id) from users u where u.name=$1`
 	row := o.Conn.QueryRow(q, name)
@@ -138,7 +160,7 @@ utc.channel_id=ch.id and utc.user_id=u.id) from users u where u.name=$1`
 	return u, nil
 }
 
-func (o *AppDb) GetUsers() ([]model.User, error) {
+func (o *PostgresDb) GetUsers() ([]model.User, error) {
 	q := `select u.id,u.name,u.created_at, array(select name from channels ch join user_to_channel utc on 
 utc.channel_id=ch.id and utc.user_id=u.id) from users u`
 
@@ -168,14 +190,14 @@ utc.channel_id=ch.id and utc.user_id=u.id) from users u`
 	return users, nil
 }
 
-func (o *AppDb) RemoveUser(username string) error {
+func (o *PostgresDb) RemoveUser(username string) error {
 	if _, err := o.Conn.Exec("delete from users where name=$1", username); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (o *AppDb) AddSubscription(username string, channelName string) error {
+func (o *PostgresDb) AddSubscription(username string, channelName string) error {
 	u, err := o.GetUser(username)
 	if err != nil {
 		return err
@@ -191,7 +213,7 @@ func (o *AppDb) AddSubscription(username string, channelName string) error {
 	return nil
 }
 
-func (o *AppDb) AddMessage(m model.Msg) error {
+func (o *PostgresDb) AddMessage(m model.Msg) error {
 	u, err := o.GetUser(m.User)
 	if err != nil {
 		return err

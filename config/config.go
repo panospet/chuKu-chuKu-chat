@@ -8,6 +8,7 @@ import (
 type Config struct {
 	Dsn  string `yaml:"dsn"`
 	Port string `yaml:"port"`
+	Redis string `yaml:"redis"`
 }
 
 func NewConfig(filePath string) (*Config, error) {
