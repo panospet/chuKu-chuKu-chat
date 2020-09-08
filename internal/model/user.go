@@ -14,7 +14,7 @@ type User struct {
 	pubSub           *redis.PubSub
 	StopListenerChan chan struct{}
 	MessageChan      chan redis.Message
-	channels         []string
+	Channels         []string
 	CreatedAt        time.Time `db:"created_at"`
 }
 
@@ -24,25 +24,25 @@ func NewUser(username string, channels ...string) *User {
 		Username:         username,
 		MessageChan:      make(chan redis.Message),
 		StopListenerChan: make(chan struct{}),
-		channels:         channels,
+		Channels:         channels,
 		CreatedAt:        time.Now(),
 	}
 }
 
 func (u *User) GetChannels() []string {
-	return u.channels
+	return u.Channels
 }
 
 func (u *User) AddChannel(channelName string) bool {
 	alreadyExists := false
-	for _, c := range u.channels {
+	for _, c := range u.Channels {
 		if c == channelName {
 			alreadyExists = true
 			break
 		}
 	}
 	if !alreadyExists {
-		u.channels = append(u.channels, channelName)
+		u.Channels = append(u.Channels, channelName)
 	}
 	return alreadyExists
 }
@@ -62,7 +62,7 @@ func (u *User) ConnectToPubSub(rdb *redis.Client) error {
 
 	c := u.GetChannels()
 	if len(c) == 0 {
-		return errors.New(fmt.Sprintf("no channels for user %s", u.Username))
+		return errors.New(fmt.Sprintf("no Channels for user %s", u.Username))
 	}
 
 	// if user has already a pubsub instance it needs to be closed
@@ -76,10 +76,10 @@ func (u *User) ConnectToPubSub(rdb *redis.Client) error {
 	}
 
 	u.pubSub = rdb.Subscribe(c...)
-	fmt.Println("user", u.Username, "subscribed to pubsub for channels", c)
+	fmt.Println("user", u.Username, "subscribed to pubsub for Channels", c)
 
 	go func() {
-		fmt.Println("started listening to pubsub channels")
+		fmt.Println("started listening to pubsub Channels")
 		for {
 			select {
 			case msg, ok := <-u.pubSub.Channel():

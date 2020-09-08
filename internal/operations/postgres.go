@@ -3,6 +3,8 @@ package operations
 import (
 	"errors"
 	"fmt"
+	"github.com/go-redis/redis/v7"
+	"github.com/lib/pq"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -46,7 +48,7 @@ users.id=chat_messages.user_id where channel_id=$1 order by sent_at desc limit $
 		var userName string
 		var content string
 		var sentAt time.Time
-		if err := rows.Scan(&id,&userName,&content,&sentAt); err != nil {
+		if err := rows.Scan(&id, &userName, &content, &sentAt); err != nil {
 			return nil, err
 		}
 		m := model.Msg{
@@ -116,18 +118,55 @@ func (o *AppDb) AddUser(user model.User) error {
 }
 
 func (o *AppDb) GetUser(name string) (model.User, error) {
-	q := `select id,name,created_at from users where name=$1`
-	row := o.Conn.QueryRowx(q, name)
-	var u model.User
-	err := row.StructScan(&u)
-	if err != nil {
-		return model.User{}, errors.New(fmt.Sprintf("error getting user: %s", err))
+	q := `select u.id,u.name,u.created_at, array(select name from channels ch join user_to_channel utc on 
+utc.channel_id=ch.id and utc.user_id=u.id) from users u where u.name=$1`
+	row := o.Conn.QueryRow(q, name)
+	var userId int
+	var userName string
+	var userCreatedAt time.Time
+	var channels []string
+	if err := row.Scan(&userId, &userName, &userCreatedAt, pq.Array(&channels)); err != nil {
+		return model.User{}, err
+	}
+	u := model.User{
+		Id:               userId,
+		Username:         userName,
+		StopListenerChan: make(chan struct{}),
+		MessageChan:      make(chan redis.Message),
+		CreatedAt:        userCreatedAt,
+		Channels:         channels,
 	}
 	return u, nil
 }
 
 func (o *AppDb) GetUsers() ([]model.User, error) {
-	return nil, errors.New("not implemented")
+	q := `select u.id,u.name,u.created_at, array(select name from channels ch join user_to_channel utc on 
+utc.channel_id=ch.id and utc.user_id=u.id) from users u;`
+
+	rows, err := o.Conn.Query(q)
+	if err != nil {
+		return []model.User{}, err
+	}
+	var users []model.User
+	for rows.Next() {
+		var userId int
+		var userName string
+		var userCreatedAt time.Time
+		var channels []string
+		if err := rows.Scan(&userId, &userName, &userCreatedAt, pq.Array(&channels)); err != nil {
+			return []model.User{}, err
+		}
+		u := model.User{
+			Id:               userId,
+			Username:         userName,
+			StopListenerChan: make(chan struct{}),
+			MessageChan:      make(chan redis.Message),
+			CreatedAt:        userCreatedAt,
+			Channels:         channels,
+		}
+		users = append(users, u)
+	}
+	return users, nil
 }
 
 func (o *AppDb) RemoveUser(username string) error {
