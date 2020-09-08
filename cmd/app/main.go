@@ -1,22 +1,42 @@
 package main
 
 import (
+	"log"
+
 	"github.com/go-redis/redis/v7"
 
+	"chuKu-chuKu-chat/config"
 	"chuKu-chuKu-chat/internal/api"
 	"chuKu-chuKu-chat/internal/db"
 )
 
 func main() {
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-	dummOp, err := db.NewDummyDb(rdb)
+	cfg, err := config.NewConfig("./config/config.yml")
 	if err != nil {
-		panic(err)
+		log.Fatalln("error creating new configuration:", err)
 	}
-	app := api.NewApp(rdb, dummOp)
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     cfg.Redis,
+		Password: "",
+		DB:       0,
+	})
+
+	var database db.DbI
+	if cfg.Mode == config.DummyMode {
+		dummy, err := db.NewDummyDb(rdb)
+		if err != nil {
+			log.Fatalln("error creating new dummy database:", err)
+		}
+		database = dummy
+	} else if cfg.Mode == config.DbMode {
+		postgresDb, err := db.NewPostgresDb(cfg.Dsn, rdb)
+		if err != nil {
+			log.Fatalln("error creating new database:", err)
+		}
+		database = postgresDb
+	} else {
+		log.Fatalln("unknown mode")
+	}
+	app := api.NewApp(rdb, database)
 	app.Run()
 }

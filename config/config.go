@@ -5,9 +5,12 @@ import (
 	"io/ioutil"
 )
 
+const DummyMode = "dummy"
+const DbMode = "db"
+
 type Config struct {
-	Dsn  string `yaml:"dsn"`
-	Port string `yaml:"port"`
+	Mode  string `yaml:"mode"`
+	Dsn   string `yaml:"dsn"`
 	Redis string `yaml:"redis"`
 }
 

@@ -3,9 +3,10 @@ package model
 import (
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v7"
 	"log"
 	"time"
+
+	"github.com/go-redis/redis/v7"
 )
 
 type User struct {
@@ -14,7 +15,7 @@ type User struct {
 	Channels  []string  `json:"channels"`
 	CreatedAt time.Time `json:"createdAt" db:"created_at"`
 
-	pubSub           *redis.PubSub      `json:"-"`
+	PubSub           *redis.PubSub      `json:"-"`
 	StopListenerChan chan struct{}      `json:"-"`
 	MessageChan      chan redis.Message `json:"-"`
 }
@@ -75,23 +76,23 @@ func (u *User) ConnectToPubSub(rdb *redis.Client) error {
 	}
 
 	// if user has already a pubsub instance it needs to be closed
-	if u.pubSub != nil {
-		if err := u.pubSub.Unsubscribe(); err != nil {
+	if u.PubSub != nil {
+		if err := u.PubSub.Unsubscribe(); err != nil {
 			return errors.New(fmt.Sprintf("error unsubscribing from pubsub: %s", err))
 		}
-		if err := u.pubSub.Close(); err != nil {
+		if err := u.PubSub.Close(); err != nil {
 			return errors.New(fmt.Sprintf("error closing pubsub connection: %s", err))
 		}
 	}
 
-	u.pubSub = rdb.Subscribe(c...)
+	u.PubSub = rdb.Subscribe(c...)
 	fmt.Println("user", u.Username, "subscribed to pubsub for Channels", c)
 
 	go func() {
 		fmt.Println("started listening to pubsub Channels")
 		for {
 			select {
-			case msg, ok := <-u.pubSub.Channel():
+			case msg, ok := <-u.PubSub.Channel():
 				if !ok {
 					log.Println("something bad happened, terminating pubsub listener")
 					return
@@ -108,11 +109,11 @@ func (u *User) ConnectToPubSub(rdb *redis.Client) error {
 }
 
 func (u *User) Disconnect() error {
-	if u.pubSub != nil {
-		if err := u.pubSub.Unsubscribe(); err != nil {
+	if u.PubSub != nil {
+		if err := u.PubSub.Unsubscribe(); err != nil {
 			return err
 		}
-		if err := u.pubSub.Close(); err != nil {
+		if err := u.PubSub.Close(); err != nil {
 			return err
 		}
 	}
