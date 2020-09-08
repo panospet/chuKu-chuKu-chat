@@ -22,10 +22,10 @@ func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.URL.Query()["username"][0]
 	var u model.User
-	u, err = a.operator.GetUser(username)
+	u, err = a.db.GetUser(username)
 	if err != nil {
 		newUser := model.NewUser(username)
-		err = a.operator.AddUser(*newUser)
+		err = a.db.AddUser(*newUser)
 		if err != nil {
 			handleWSError(err, conn)
 			return
@@ -78,7 +78,7 @@ func (a *App) onDisconnect(conn *websocket.Conn, u *model.User) chan struct{} {
 		}
 		close(closeCh)
 
-		return a.operator.RemoveUser(u.Username)
+		return a.db.RemoveUser(u.Username)
 		//return nil
 	})
 	fmt.Println("connection closed for user", u.Username)
@@ -101,7 +101,7 @@ func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client) error {
 	fmt.Println("Chat function with msg:", string(msgB))
 
 	go func() {
-		err := a.operator.AddMessage(msg)
+		err := a.db.AddMessage(msg)
 		if err != nil {
 			fmt.Println("ERROR: could not store message")
 		}

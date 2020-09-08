@@ -13,17 +13,17 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
-	"chuKu-chuKu-chat/internal/operations"
+	"chuKu-chuKu-chat/internal/db"
 	"chuKu-chuKu-chat/internal/model"
 )
 
 type App struct {
 	upgrader websocket.Upgrader
 	rdb      *redis.Client
-	operator operations.Operator
+	db       db.DbI
 }
 
-func NewApp(redis *redis.Client, db operations.Operator) *App {
+func NewApp(redis *redis.Client, db db.DbI) *App {
 	return &App{
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -33,8 +33,8 @@ func NewApp(redis *redis.Client, db operations.Operator) *App {
 				return true
 			},
 		},
-		rdb:      redis,
-		operator: db,
+		rdb: redis,
+		db:  db,
 	}
 }
 
@@ -65,7 +65,7 @@ func (a *App) Run() {
 }
 
 func (a *App) getChannels(w http.ResponseWriter, r *http.Request) {
-	channels, err := a.operator.GetChannels()
+	channels, err := a.db.GetChannels()
 	if err != nil {
 		respondWithError(w, 404, "channel does not exist")
 		return
@@ -80,7 +80,7 @@ func (a *App) getChannelLastMessages(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, "bad amount given")
 		return
 	}
-	messages, err := a.operator.ChannelLastMessages(channelName, amount)
+	messages, err := a.db.ChannelLastMessages(channelName, amount)
 	if err != nil {
 		// todo log error
 		respondWithError(w, 500, "an error occured")
@@ -114,9 +114,9 @@ func (a *App) createChannel(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, err.Error())
 		return
 	}
-	err = a.operator.AddChannel(c)
+	err = a.db.AddChannel(c)
 	if err != nil {
-		if er, ok := err.(operations.ErrChannelAlreadyExists); ok {
+		if er, ok := err.(db.ErrChannelAlreadyExists); ok {
 			fmt.Println("CONFLICTAKI")
 			respondWithError(w, http.StatusConflict, er.Error())
 			return
@@ -134,7 +134,7 @@ func (a *App) deleteChannel(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, "please give a valid channel name")
 		return
 	}
-	err := a.operator.DeleteChannel(channelName)
+	err := a.db.DeleteChannel(channelName)
 	if err != nil {
 		respondWithError(w, 500, "channel deletion failure")
 		return
@@ -143,7 +143,7 @@ func (a *App) deleteChannel(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getUserChannels(w http.ResponseWriter, r *http.Request) {
 	username := mux.Vars(r)["user"]
-	user, err := a.operator.GetUser(username)
+	user, err := a.db.GetUser(username)
 	if err != nil {
 		respondWithError(w, 400, "user not found")
 		return
@@ -156,7 +156,7 @@ type UserJson struct {
 }
 
 func (a *App) getUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := a.operator.GetUsers()
+	users, err := a.db.GetUsers()
 	if err != nil {
 		respondWithError(w, 500, "an error occured")
 		return
@@ -170,7 +170,7 @@ func (a *App) getUsers(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getUser(w http.ResponseWriter, r *http.Request) {
 	username := mux.Vars(r)["user"]
-	u, err := a.operator.GetUser(username)
+	u, err := a.db.GetUser(username)
 	if err != nil {
 		respondWithError(w, 404, "user not found")
 	}
@@ -195,7 +195,7 @@ func (a *App) subscription(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, "failed to read request body")
 		return
 	}
-	err = a.operator.AddSubscription(s.User, s.Channel)
+	err = a.db.AddSubscription(s.User, s.Channel)
 	if err != nil {
 		respondWithError(w, 500, "an error occured")
 		return

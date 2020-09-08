@@ -1,4 +1,4 @@
-package operations
+package db
 
 import (
 	"chuKu-chuKu-chat/internal/common"
@@ -8,14 +8,14 @@ import (
 	"chuKu-chuKu-chat/internal/model"
 )
 
-type DummyOperator struct {
+type DummyDb struct {
 	Channels map[string]model.Channel
 	Users    map[string]model.User
 	Messages []model.Msg
 	rdb      *redis.Client
 }
 
-func NewDummyOperator(rdb *redis.Client) (*DummyOperator, error) {
+func NewDummyDb(rdb *redis.Client) (*DummyDb, error) {
 	g := model.Channel{
 		Name:        "general",
 		Description: "general discussion",
@@ -35,7 +35,7 @@ func NewDummyOperator(rdb *redis.Client) (*DummyOperator, error) {
 		return nil, nil
 	}
 	msgs := common.GenerateRandomMessages("general", 3)
-	return &DummyOperator{
+	return &DummyDb{
 		Channels: map[string]model.Channel{"general": g, "metallica": m},
 		Users:    map[string]model.User{u.Username: *u},
 		rdb:      rdb,
@@ -43,12 +43,12 @@ func NewDummyOperator(rdb *redis.Client) (*DummyOperator, error) {
 	}, nil
 }
 
-func (d *DummyOperator) AddMessage(msg model.Msg) error {
+func (d *DummyDb) AddMessage(msg model.Msg) error {
 	d.Messages = append(d.Messages, msg)
 	return nil
 }
 
-func (d *DummyOperator) GetChannel(name string) (model.Channel, error) {
+func (d *DummyDb) GetChannel(name string) (model.Channel, error) {
 	c, ok := d.Channels[name]
 	if !ok {
 		return model.Channel{}, errors.New("channel does not exist")
@@ -56,7 +56,7 @@ func (d *DummyOperator) GetChannel(name string) (model.Channel, error) {
 	return c, nil
 }
 
-func (d *DummyOperator) GetChannels() ([]model.Channel, error) {
+func (d *DummyDb) GetChannels() ([]model.Channel, error) {
 	var out []model.Channel
 	for _, c := range d.Channels {
 		out = append(out, c)
@@ -64,7 +64,7 @@ func (d *DummyOperator) GetChannels() ([]model.Channel, error) {
 	return out, nil
 }
 
-func (d *DummyOperator) ChannelLastMessages(channelName string, amount int) ([]model.Msg, error) {
+func (d *DummyDb) ChannelLastMessages(channelName string, amount int) ([]model.Msg, error) {
 	if _, err := d.GetChannel(channelName); err != nil {
 		return []model.Msg{}, err
 	}
@@ -80,7 +80,7 @@ func (d *DummyOperator) ChannelLastMessages(channelName string, amount int) ([]m
 	return out, nil
 }
 
-func (d *DummyOperator) AddChannel(ch model.Channel) error {
+func (d *DummyDb) AddChannel(ch model.Channel) error {
 	user, ok := d.Users[ch.Creator]
 	if !ok {
 		return errors.New("user does not exist")
@@ -93,7 +93,7 @@ func (d *DummyOperator) AddChannel(ch model.Channel) error {
 	return user.RefreshChannels(d.rdb)
 }
 
-func (d *DummyOperator) DeleteChannel(name string) error {
+func (d *DummyDb) DeleteChannel(name string) error {
 	if _, err := d.GetChannel(name); err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (d *DummyOperator) DeleteChannel(name string) error {
 	return nil
 }
 
-func (d *DummyOperator) GetUser(name string) (model.User, error) {
+func (d *DummyDb) GetUser(name string) (model.User, error) {
 	user, ok := d.Users[name]
 	if !ok {
 		return model.User{}, errors.New("user does not exist")
@@ -109,7 +109,7 @@ func (d *DummyOperator) GetUser(name string) (model.User, error) {
 	return user, nil
 }
 
-func (d *DummyOperator) GetUsers() ([]model.User, error) {
+func (d *DummyDb) GetUsers() ([]model.User, error) {
 	var out []model.User
 	for _, u := range d.Users {
 		out = append(out, u)
@@ -117,7 +117,7 @@ func (d *DummyOperator) GetUsers() ([]model.User, error) {
 	return out, nil
 }
 
-func (d *DummyOperator) AddUser(user model.User) error {
+func (d *DummyDb) AddUser(user model.User) error {
 	if _, ok := d.Users[user.Username]; ok {
 		return errors.New("user already exists")
 	}
@@ -125,7 +125,7 @@ func (d *DummyOperator) AddUser(user model.User) error {
 	return nil
 }
 
-func (d *DummyOperator) RemoveUser(username string) error {
+func (d *DummyDb) RemoveUser(username string) error {
 	if _, ok := d.Users[username]; !ok {
 		return errors.New("user does not exist")
 	}
@@ -133,7 +133,7 @@ func (d *DummyOperator) RemoveUser(username string) error {
 	return nil
 }
 
-func (d *DummyOperator) AddSubscription(username string, channelName string) error {
+func (d *DummyDb) AddSubscription(username string, channelName string) error {
 	u, ok := d.Users[username]
 	if !ok {
 		return errors.New("user does not exist")

@@ -1,11 +1,12 @@
-package operations
+package db
 
 import (
-	"chuKu-chuKu-chat/internal/model"
 	"fmt"
+
+	"chuKu-chuKu-chat/internal/model"
 )
 
-type Operator interface {
+type DbI interface {
 	AddChannel(ch model.Channel) error
 	GetChannel(name string) (model.Channel, error)
 	ChannelLastMessages(name string, amount int) ([]model.Msg, error)

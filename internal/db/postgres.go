@@ -1,14 +1,13 @@
-package operations
+package db
 
 import (
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v7"
-	"github.com/lib/pq"
 	"time"
 
+	"github.com/go-redis/redis/v7"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 
 	"chuKu-chuKu-chat/internal/model"
 )
