@@ -19,10 +19,46 @@ Ridiculous name for a chat application, I know.
 
 ### How to run
 
+Currently there are two modes.
+- The "dummy" mode, which keeps everything in-memory. In this mode, no persistence will take place. After closing 
+the application everything will vanish.
+- The "db" mode, which keeps everything inside a PostgreSQL database.
+
+### Choose between modes
+
+To choose between modes, edit the file `config/config.yml`. The `mode` field can be either `"dummy"` or `"db"`.
+
+#### Start Redis
+
+Both modes need a Redis database. To start a Redis instance on your machine, type:
 ```
-cd cmd/app
-go run main.go
+make redis-start
 ```
+
+#### Start database (for "db" mode)
+
+To start a PostgreSQL instance on your machine, and run all the migrations available, type:
+
+```
+make db-start
+make migrate
+```
+
+You can login in the database anytime you want, by typing:
+```
+make db-login
+```
+
+#### Run the application!
+
+Finally. You can run the application by typing:
+
+```
+make run
+```
+Et voila!
+
+#### Healthcheck
 
 Then check if everything is running successfully with:
 
@@ -60,7 +96,7 @@ if response is 200, you're good to go.
 
 `GET /channels/{string}/lastMessages?amount={int}`
 
-`GET /chat?username={string}` for creating a user && a websockeet connection
+`GET /chat?username={string}` for creating a user && a websocket connection
 
 `GET /users`
 
