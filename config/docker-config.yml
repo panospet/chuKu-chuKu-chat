@@ -1,0 +1,3 @@
+mode: "db"
+dsn: "postgres://20.20.1.1/chukudb?sslmode=disable&user=postgres&password=password"
+redis: "20.20.1.2:6379"

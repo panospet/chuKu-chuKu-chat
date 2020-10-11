@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/go-redis/redis/v7"
 
@@ -11,7 +12,11 @@ import (
 )
 
 func main() {
-	cfg, err := config.NewConfig("./config/config.yml")
+	cfgPath := os.Getenv("CONFIG_FILE")
+	if cfgPath == "" {
+		cfgPath = "./config/config.yml"
+	}
+	cfg, err := config.NewConfig(cfgPath)
 	if err != nil {
 		log.Fatalln("error creating new configuration:", err)
 	}
