@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -82,10 +83,12 @@ func (a *App) getChannelLastMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	messages, err := a.db.ChannelLastMessages(channelName, amount)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows{
 		log.Println("error getting channel last messages:", err)
 		respondWithError(w, 500, "an error occured")
 		return
+	} else if err == sql.ErrNoRows {
+		respondWithJSON(w, 200, []model.Msg{})
 	}
 	respondWithJSON(w, 200, messages)
 }
