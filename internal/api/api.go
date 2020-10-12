@@ -83,7 +83,7 @@ func (a *App) getChannelLastMessages(w http.ResponseWriter, r *http.Request) {
 	}
 	messages, err := a.db.ChannelLastMessages(channelName, amount)
 	if err != nil {
-		// todo log error
+		log.Println("error getting channel last messages:", err)
 		respondWithError(w, 500, "an error occured")
 		return
 	}
@@ -137,6 +137,7 @@ func (a *App) deleteChannel(w http.ResponseWriter, r *http.Request) {
 	}
 	err := a.db.DeleteChannel(channelName)
 	if err != nil {
+		log.Println("error deleting channel", err)
 		respondWithError(w, 500, "channel deletion failure")
 		return
 	}
@@ -159,6 +160,7 @@ type UserJson struct {
 func (a *App) getUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := a.db.GetUsers()
 	if err != nil {
+		log.Println("error getting users:", err)
 		respondWithError(w, 500, "an error occured")
 		return
 	}
@@ -194,6 +196,7 @@ func (a *App) subscription(w http.ResponseWriter, r *http.Request) {
 	}
 	err = a.db.AddSubscription(s.User, s.Channel)
 	if err != nil {
+		log.Println("error adding subscription:", err)
 		respondWithError(w, 500, "an error occured")
 		return
 	}

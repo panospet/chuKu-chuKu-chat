@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/go-redis/redis/v7"
@@ -80,7 +81,7 @@ func (o *PostgresDb) GetChannels() ([]model.Channel, error) {
 	q := `select id,name,creator,description,is_private,created_at from channels`
 	rows, err := o.Conn.Queryx(q)
 	if err != nil {
-		fmt.Println("error while trying query", err)
+		log.Println("error while trying query", err)
 		return nil, err
 	}
 	var out []model.Channel
@@ -132,7 +133,7 @@ func (o *PostgresDb) AddUser(user model.User) error {
 	var ids []int
 	rows, err := tx.Query(query, args...)
 	if err != nil {
-		fmt.Println("error in get")
+		log.Println("error in get", err)
 		return err
 	}
 	for rows.Next() {
@@ -214,14 +215,17 @@ func (o *PostgresDb) RemoveUser(username string) error {
 func (o *PostgresDb) AddSubscription(username string, channelName string) error {
 	u, err := o.GetUser(username)
 	if err != nil {
+		log.Println("error getting user", username, err)
 		return err
 	}
 	c, err := o.GetChannel(channelName)
 	if err != nil {
+		log.Println("error getting channel", channelName, err)
 		return err
 	}
 	q := `insert into user_to_channel (user_id,channel_id) values ($1,$2) on conflict do nothing`
 	if _, err := o.Conn.Exec(q, u.Id, c.Id); err != nil {
+		log.Println("error executing", q, u.Id, c.Id, err)
 		return err
 	}
 	u.AddChannel(channelName)
