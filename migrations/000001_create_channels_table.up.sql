@@ -8,3 +8,5 @@ CREATE TABLE channels(
 );
 
 CREATE INDEX idx_channel_name ON channels (name);
+
+insert into channels (name,creator,description,is_private,created_at) values('general','admin','general discussion','f',now());
