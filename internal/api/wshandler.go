@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -22,18 +23,16 @@ func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.URL.Query()["username"][0]
 	var u model.User
-	u, err = a.db.GetUser(username)
+	newUser := model.NewUser(username)
+	err = a.db.AddUser(*newUser)
 	if err != nil {
-		newUser := model.NewUser(username)
-		err = a.db.AddUser(*newUser)
-		if err != nil {
-			handleWSError(err, conn)
-			return
-		}
-		u = *newUser
+		log.Println("error adding user", err)
+		handleWSError(errors.New("user already exists"), conn)
+		return
 	}
+	u = *newUser
 
-	err = a.onConnect(r, conn, a.rdb, u)
+	err = a.onConnect(r, conn, a.rdb, *newUser)
 	if err != nil {
 		handleWSError(err, conn)
 		return
