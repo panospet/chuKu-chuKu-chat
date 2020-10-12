@@ -247,3 +247,11 @@ func (o *PostgresDb) AddMessage(m model.Msg) error {
 	}
 	return nil
 }
+
+func (o *PostgresDb) ClearOldMessages(hours int) error {
+	q := fmt.Sprintf(`delete from chat_messages where sent_at < now() - interval '%d hours'`, hours)
+	if _, err := o.Conn.Exec(q); err != nil {
+		return errors.New(fmt.Sprintf("error clearing messages: %s", err))
+	}
+	return nil
+}

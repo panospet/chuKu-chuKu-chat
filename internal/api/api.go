@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-redis/redis/v7"
 	"github.com/gorilla/handlers"
@@ -62,8 +63,24 @@ func (a *App) Run() {
 	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
+	go a.Monitor()
 	fmt.Println("serving!")
 	log.Fatal(http.ListenAndServe(":8000", handlers.CORS(originsOk, methodsOk)(r)))
+}
+
+func (a *App) Monitor() {
+	if err := a.db.ClearOldMessages(24); err != nil {
+		log.Println("Monitor: error while clearing old messages:", err)
+	} else {
+		log.Println("Monitor: cleared old messages with success", time.Now().String())
+	}
+	for now := range time.Tick(6 * time.Hour) {
+		if err := a.db.ClearOldMessages(24); err != nil {
+			log.Println("Monitor: error while clearing old messages:", err)
+		} else {
+			log.Println("Monitor: cleared old messages with success", now.String())
+		}
+	}
 }
 
 func (a *App) getChannels(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +100,7 @@ func (a *App) getChannelLastMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	messages, err := a.db.ChannelLastMessages(channelName, amount)
-	if err != nil && err != sql.ErrNoRows{
+	if err != nil && err != sql.ErrNoRows {
 		log.Println("error getting channel last messages:", err)
 		respondWithError(w, 500, "an error occured")
 		return

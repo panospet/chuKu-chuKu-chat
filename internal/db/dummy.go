@@ -1,10 +1,12 @@
 package db
 
 import (
-	"chuKu-chuKu-chat/internal/common"
 	"errors"
+	"time"
+
 	"github.com/go-redis/redis/v7"
 
+	"chuKu-chuKu-chat/internal/common"
 	"chuKu-chuKu-chat/internal/model"
 )
 
@@ -144,4 +146,16 @@ func (d *DummyDb) AddSubscription(username string, channelName string) error {
 	}
 	u.AddChannel(channelName)
 	return u.RefreshChannels(d.rdb)
+}
+
+func (d *DummyDb) ClearOldMessages(hours int) error {
+	lim := 0
+	for i, m := range d.Messages {
+		if m.Timestamp.After(time.Now().Add(-time.Duration(hours) * time.Hour)) {
+			lim = i
+			break
+		}
+	}
+	d.Messages = d.Messages[lim:]
+	return nil
 }

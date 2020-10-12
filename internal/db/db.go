@@ -21,6 +21,7 @@ type DbI interface {
 	AddSubscription(username string, channelName string) error
 
 	AddMessage(m model.Msg) error
+	ClearOldMessages(hours int) error
 }
 
 type ErrChannelAlreadyExists struct {
