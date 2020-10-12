@@ -102,5 +102,7 @@ if response is 200, you're good to go.
 
 `GET /users/{username}`
 
+`DELETE /users/{username}`
+
 `GET /users/{username}/channels`
 

@@ -55,6 +55,7 @@ func (a *App) Run() {
 	r.HandleFunc("/users", a.getUsers).Methods("GET")
 	r.HandleFunc("/users/{user}", a.getUser).Methods("GET")
 	r.HandleFunc("/users/{user}/channels", a.getUserChannels).Methods("GET")
+	r.HandleFunc("/users/{user}", a.deleteUser).Methods("DELETE")
 
 	r.HandleFunc("/chat", a.chatWebSocketHandler).Methods("GET")
 
@@ -222,6 +223,14 @@ func (a *App) subscription(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJSON(w, 201, SuccessMessage{Message: fmt.Sprintf("User %s was subscribed to channel %s"+
 		" successfully", s.User, s.Channel)})
+}
+
+func (a *App) deleteUser(w http.ResponseWriter, r *http.Request) {
+	username := mux.Vars(r)["user"]
+	if err := a.db.RemoveUser(username); err != nil {
+		respondWithError(w, 404, "user not found")
+	}
+	respondWithJSON(w, 200, SuccessMessage{Message: "user was deleted successfully"})
 }
 
 func handleWSError(err error, conn *websocket.Conn) {
