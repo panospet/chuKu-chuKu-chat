@@ -140,14 +140,9 @@ func (d *DummyDb) AddSubscription(username string, channelName string) error {
 	return u.RefreshChannels(d.rdb)
 }
 
-func (d *DummyDb) ClearOldMessages(hours int) error {
-	lim := 0
-	for i, m := range d.Messages {
-		if m.Timestamp.After(time.Now().Add(-time.Duration(hours) * time.Hour)) {
-			lim = i
-			break
-		}
+func (d *DummyDb) ClearOldMessages(amount int) error {
+	if len(d.Messages) > amount {
+		d.Messages = d.Messages[len(d.Messages)-500:]
 	}
-	d.Messages = d.Messages[lim:]
 	return nil
 }

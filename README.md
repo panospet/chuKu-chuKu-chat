@@ -71,6 +71,41 @@ if response is 200, you're good to go.
 
 `GET /health`
 
+`GET /info`
+
+Example response of the `info` endpoint:
+```
+{
+    "listen_url": "http://test.com/radio.mp3",
+    "is_live": true,
+    "streamer_name": "The Streamer",
+    "song_artist": "Rage Against The Machine",
+    "song_title": "Take the power back",
+    "song_history": [
+        {
+            "song_artist": "The Roots",
+            "song_title": "What they do"
+        },
+        {
+            "song_artist": "Talib Kweli and Hi-Tek",
+            "song_title": "Just begun feat. Jay Electronica"
+        },
+        {
+            "song_artist": "Large Professor",
+            "song_title": "Ijuswannachill"
+        },
+        {
+            "song_artist": "Mos Def",
+            "song_title": "Sunshine"
+        },
+        {
+            "song_artist": Grand Puba",
+            "song_title": "I like it"
+        }
+    ]
+}
+```
+
 `GET /channels`
 
 `POST /channels` with body: 

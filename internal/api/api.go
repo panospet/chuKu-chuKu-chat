@@ -16,17 +16,21 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
+	"chuKu-chuKu-chat/config"
 	"chuKu-chuKu-chat/internal/db"
+	"chuKu-chuKu-chat/internal/info_fetch"
 	"chuKu-chuKu-chat/internal/model"
 )
 
 type App struct {
-	upgrader websocket.Upgrader
-	rdb      *redis.Client
-	db       db.DbI
+	upgrader   websocket.Upgrader
+	rdb        *redis.Client
+	db         db.DbI
+	infoGetter info_fetch.Getter
+	mode       string
 }
 
-func NewApp(redis *redis.Client, db db.DbI) *App {
+func NewApp(mode string, redis *redis.Client, db db.DbI, infoGetter info_fetch.Getter) *App {
 	return &App{
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -36,8 +40,10 @@ func NewApp(redis *redis.Client, db db.DbI) *App {
 				return true
 			},
 		},
-		rdb: redis,
-		db:  db,
+		rdb:        redis,
+		db:         db,
+		infoGetter: infoGetter,
+		mode:       mode,
 	}
 }
 
@@ -59,6 +65,8 @@ func (a *App) Run() {
 
 	r.HandleFunc("/chat", a.chatWebSocketHandler).Methods("GET")
 
+	r.HandleFunc("/info", a.getNowPlayingInfo).Methods("GET")
+
 	// todo configure allowed origins
 	//originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
 	originsOk := handlers.AllowedOrigins([]string{"*"})
@@ -70,13 +78,19 @@ func (a *App) Run() {
 }
 
 func (a *App) Monitor() {
-	if err := a.db.ClearOldMessages(24); err != nil {
+	var amount int
+	if a.mode == config.DummyMode {
+		amount = 1500
+	} else {
+		amount = 48
+	}
+	if err := a.db.ClearOldMessages(amount); err != nil {
 		log.Println("Monitor: error while clearing old messages:", err)
 	} else {
 		log.Println("Monitor: cleared old messages with success", time.Now().String())
 	}
-	for now := range time.Tick(6 * time.Hour) {
-		if err := a.db.ClearOldMessages(24); err != nil {
+	for now := range time.Tick(12 * time.Hour) {
+		if err := a.db.ClearOldMessages(amount); err != nil {
 			log.Println("Monitor: error while clearing old messages:", err)
 		} else {
 			log.Println("Monitor: cleared old messages with success", now.String())
@@ -231,6 +245,15 @@ func (a *App) deleteUser(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 404, "user not found")
 	}
 	respondWithJSON(w, 200, SuccessMessage{Message: "user was deleted successfully"})
+}
+
+func (a *App) getNowPlayingInfo(w http.ResponseWriter, r *http.Request) {
+	info, err := a.infoGetter.Get()
+	if err != nil {
+		fmt.Println("error getting info", err)
+		respondWithError(w, 500, "error getting info")
+	}
+	respondWithJSON(w, 200, info)
 }
 
 func handleWSError(err error, conn *websocket.Conn) {

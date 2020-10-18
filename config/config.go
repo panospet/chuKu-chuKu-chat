@@ -9,9 +9,10 @@ const DummyMode = "dummy"
 const DbMode = "db"
 
 type Config struct {
-	Mode  string `yaml:"mode"`
-	Dsn   string `yaml:"dsn"`
-	Redis string `yaml:"redis"`
+	Mode          string `yaml:"mode"`
+	Dsn           string `yaml:"dsn"`
+	Redis         string `yaml:"redis"`
+	NowPlayingUrl string `yaml:"nowPlayingUrl"`
 }
 
 func NewConfig(filePath string) (*Config, error) {
