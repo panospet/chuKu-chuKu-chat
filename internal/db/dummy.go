@@ -1,12 +1,13 @@
 package db
 
 import (
+	"chuKu-chuKu-chat/internal/common"
 	"errors"
+	"github.com/google/uuid"
 	"time"
 
 	"github.com/go-redis/redis/v7"
 
-	"chuKu-chuKu-chat/internal/common"
 	"chuKu-chuKu-chat/internal/model"
 )
 
@@ -23,22 +24,22 @@ func NewDummyDb(rdb *redis.Client) (*DummyDb, error) {
 		Description: "general discussion",
 		Creator:     "admin",
 	}
-	var err error
-	m := model.Channel{
-		Name:        "metallica",
-		Description: "metallica discussion",
-		Creator:     "admin",
-	}
 	u := model.NewUser("admin")
-	u.AddChannel("metallica")
 	u.AddChannel("general")
-	err = u.RefreshChannels(rdb)
+	err := u.RefreshChannels(rdb)
 	if err != nil {
 		return nil, errors.New("error refreshing channels: " + err.Error())
 	}
-	msgs := common.GenerateRandomMessages("general", 3, "admin")
+	msgs := []model.Msg{{
+		Id:        uuid.New().String(),
+		Content:   "Chatting started!",
+		Channel:   "general",
+		User:      "admin",
+		Timestamp: time.Now(),
+	}}
+	msgs = append(msgs, common.GenerateRandomMessages("general", 29000, "admin")...)
 	return &DummyDb{
-		Channels: map[string]model.Channel{"general": g, "metallica": m},
+		Channels: map[string]model.Channel{"general": g},
 		Users:    map[string]model.User{u.Username: *u},
 		rdb:      rdb,
 		Messages: msgs,
@@ -70,16 +71,7 @@ func (d *DummyDb) ChannelLastMessages(channelName string, amount int) ([]model.M
 	if _, err := d.GetChannel(channelName); err != nil {
 		return []model.Msg{}, err
 	}
-	var out []model.Msg
-	for _, m := range d.Messages {
-		if m.Channel == channelName {
-			out = append(out, m)
-		}
-		if len(out) == amount {
-			break
-		}
-	}
-	return out, nil
+	return d.Messages[len(d.Messages)-amount-1:], nil
 }
 
 func (d *DummyDb) AddChannel(ch model.Channel) error {

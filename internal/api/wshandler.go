@@ -75,6 +75,9 @@ func (a *App) onDisconnect(conn *websocket.Conn, u *model.User) chan struct{} {
 		if err := u.Disconnect(); err != nil {
 			return err
 		}
+		if err := a.db.RemoveUser(u.Username); err != nil {
+			return err
+		}
 		close(closeCh)
 
 		return nil

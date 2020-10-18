@@ -1,10 +1,11 @@
 package common
 
 import (
-	"github.com/google/uuid"
 	"math/rand"
+	"sort"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/tjarratt/babble"
 
 	"chuKu-chuKu-chat/internal/model"
@@ -21,10 +22,12 @@ func GenerateRandomMessages(channelName string, amount int, users ...string) []m
 			Id:        uuid.New().String(),
 			Content:   babbler.Babble(),
 			Channel:   channelName,
-			Command:   0,
 			User:      users[rand.Intn(len(users))],
-			Timestamp: time.Now(),
+			Timestamp: time.Now().Add(time.Duration(-rand.Intn(48)) * time.Hour),
 		})
 	}
+	sort.Slice(output[:], func(i, j int) bool {
+		return output[i].Timestamp.UnixNano() < output[j].Timestamp.UnixNano()
+	})
 	return output
 }
