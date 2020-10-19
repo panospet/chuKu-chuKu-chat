@@ -14,13 +14,14 @@ type User struct {
 	Username  string    `json:"name" db:"name"`
 	Channels  []string  `json:"channels"`
 	CreatedAt time.Time `json:"createdAt" db:"created_at"`
+	ColorCode string    `json:"color_code"`
 
 	PubSub           *redis.PubSub      `json:"-"`
 	StopListenerChan chan struct{}      `json:"-"`
 	MessageChan      chan redis.Message `json:"-"`
 }
 
-func NewUser(username string, channels ...string) *User {
+func NewUser(username string, colorCode string, channels ...string) *User {
 	generalExists := false
 	for _, ch := range channels {
 		if ch == "general" {
@@ -36,6 +37,7 @@ func NewUser(username string, channels ...string) *User {
 		StopListenerChan: make(chan struct{}),
 		Channels:         channels,
 		CreatedAt:        time.Now(),
+		ColorCode:        colorCode,
 	}
 }
 

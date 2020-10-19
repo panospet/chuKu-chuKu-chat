@@ -24,8 +24,7 @@ func NewDummyDb(rdb *redis.Client) (*DummyDb, error) {
 		Description: "general discussion",
 		Creator:     "admin",
 	}
-	u := model.NewUser("admin")
-	u.AddChannel("general")
+	u := model.NewUser("admin", "#000000", "general")
 	err := u.RefreshChannels(rdb)
 	if err != nil {
 		return nil, errors.New("error refreshing channels: " + err.Error())

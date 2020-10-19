@@ -1,6 +1,7 @@
 package api
 
 import (
+	"chuKu-chuKu-chat/internal/common"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -23,11 +24,12 @@ import (
 )
 
 type App struct {
-	upgrader   websocket.Upgrader
-	rdb        *redis.Client
-	db         db.DbI
-	infoGetter info_fetch.Getter
-	mode       string
+	upgrader    websocket.Upgrader
+	rdb         *redis.Client
+	db          db.DbI
+	infoGetter  info_fetch.Getter
+	mode        string
+	colorPicker *common.ColorPicker
 }
 
 func NewApp(mode string, redis *redis.Client, db db.DbI, infoGetter info_fetch.Getter) *App {
@@ -40,10 +42,11 @@ func NewApp(mode string, redis *redis.Client, db db.DbI, infoGetter info_fetch.G
 				return true
 			},
 		},
-		rdb:        redis,
-		db:         db,
-		infoGetter: infoGetter,
-		mode:       mode,
+		rdb:         redis,
+		db:          db,
+		infoGetter:  infoGetter,
+		mode:        mode,
+		colorPicker: common.NewColorPicker(),
 	}
 }
 

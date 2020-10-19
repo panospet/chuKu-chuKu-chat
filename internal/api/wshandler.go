@@ -23,7 +23,9 @@ func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.URL.Query()["username"][0]
 	var u model.User
-	newUser := model.NewUser(username)
+	col := a.colorPicker.ChooseNext()
+	fmt.Println("user", username, "picked color", col)
+	newUser := model.NewUser(username, col)
 	err = a.db.AddUser(*newUser)
 	if err != nil {
 		log.Println("error adding user", err)
