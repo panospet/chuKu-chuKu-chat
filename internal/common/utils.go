@@ -31,3 +31,9 @@ func GenerateRandomMessages(channelName string, amount int, users ...string) []m
 	})
 	return output
 }
+
+func Shuffle(a []string) []string {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(a), func(i, j int) { a[i], a[j] = a[j], a[i] })
+	return a
+}
