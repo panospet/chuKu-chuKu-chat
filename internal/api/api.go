@@ -76,8 +76,14 @@ func (a *App) Run() {
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
 	go a.Monitor()
+	go a.BroadcastNowPlayingInfo()
 	fmt.Println("serving!")
 	log.Fatal(http.ListenAndServe(":8000", handlers.CORS(originsOk, methodsOk)(r)))
+}
+
+func (a *App) BroadcastMessage(p Payload, c string) {
+	b, _ := json.Marshal(p)
+	a.rdb.Publish(c, string(b))
 }
 
 func (a *App) Monitor() {
@@ -97,6 +103,44 @@ func (a *App) Monitor() {
 			log.Println("Monitor: error while clearing old messages:", err)
 		} else {
 			log.Println("Monitor: cleared old messages with success", now.String())
+		}
+	}
+}
+
+func (a *App) BroadcastNowPlayingInfo() {
+	info, err := a.infoGetter.Get()
+	if err != nil {
+		log.Println("cannot get now playing info!", err)
+		return
+	}
+	artist := info.SongArtist
+	title := info.SongTitle
+	nowPlaying := fmt.Sprintf("Now playing: %s - %s", artist, title)
+	a.BroadcastMessage(Payload{
+		Content:   nowPlaying,
+		Channel:   "general",
+		User:      db.KickItBotUsername,
+		UserColor: "#000000",
+		Command:   2,
+		Timestamp: time.Now(),
+	}, "general")
+	for now := range time.Tick(15 * time.Second) {
+		info, err := a.infoGetter.Get()
+		if err != nil {
+			log.Println("cannot get now playing info!", err)
+		}
+		if info.SongArtist != artist || info.SongTitle != title {
+			artist = info.SongArtist
+			title = info.SongTitle
+			nowPlaying := fmt.Sprintf("Now playing: %s - %s", artist, title)
+			a.BroadcastMessage(Payload{
+				Content:   nowPlaying,
+				Channel:   "general",
+				User:      db.KickItBotUsername,
+				UserColor: "#000000",
+				Command:   2,
+				Timestamp: now,
+			}, "general")
 		}
 	}
 }

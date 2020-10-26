@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 
+	"chuKu-chuKu-chat/internal/db"
 	"chuKu-chuKu-chat/internal/model"
 )
 
@@ -43,6 +44,15 @@ func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	closeCh := a.onDisconnect(conn, &u)
 
 	a.onChannelMessage(conn, &u)
+
+	a.BroadcastMessage(Payload{
+		Content:   fmt.Sprintf("Shout out to %s, who has just logged in!", u.Username),
+		Channel:   "general",
+		User:      db.KickItBotUsername,
+		UserColor: "#000000",
+		Command:   2,
+		Timestamp: time.Now(),
+	}, "general")
 
 loop:
 	for {
@@ -96,6 +106,13 @@ func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client) error {
 		return err
 	}
 	msg.Id = uuid.New().String()
+	// todo matsagkonia olkis, please change
+	user, err := a.db.GetUser(msg.User)
+	if err != nil {
+		fmt.Println("error getting user:", err)
+		return err
+	}
+	msg.UserColor = user.ColorCode
 	msgB, err := json.Marshal(msg)
 	if err != nil {
 		fmt.Println("ERROR CHAT:", err)
@@ -113,10 +130,11 @@ func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client) error {
 	return rdb.Publish(msg.Channel, string(msgB)).Err()
 }
 
-type temp struct {
+type Payload struct {
 	Content   string    `json:"content"`
 	Channel   string    `json:"channel"`
 	User      string    `json:"user"`
+	UserColor string    `json:"user_color"`
 	Command   int       `json:"command"`
 	Timestamp time.Time `json:"timestamp"`
 }
@@ -124,8 +142,7 @@ type temp struct {
 func (a *App) onChannelMessage(conn *websocket.Conn, u *model.User) {
 	go func() {
 		for m := range u.MessageChan {
-			fmt.Println("RECEIVED CHANNEEL MESSAGE", m)
-			var t temp
+			var t Payload
 			err := json.Unmarshal([]byte(m.Payload), &t)
 			if err != nil {
 				fmt.Println("ERROR unmashalling message:", err)
@@ -134,6 +151,7 @@ func (a *App) onChannelMessage(conn *websocket.Conn, u *model.User) {
 				Content:   t.Content,
 				Channel:   t.Channel,
 				User:      t.User,
+				UserColor: t.UserColor,
 				Timestamp: t.Timestamp,
 			}
 			if err := conn.WriteJSON(msg); err != nil {

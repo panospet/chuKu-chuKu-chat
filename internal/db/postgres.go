@@ -116,6 +116,7 @@ func (o *PostgresDb) GetChannel(name string) (model.Channel, error) {
 	return c, nil
 }
 
+// todo add colorCode to user
 func (o *PostgresDb) AddUser(user model.User) error {
 	tx, err := o.Conn.Beginx()
 	if err != nil {

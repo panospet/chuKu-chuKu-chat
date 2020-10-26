@@ -1,7 +1,6 @@
 package db
 
 import (
-	"chuKu-chuKu-chat/internal/common"
 	"errors"
 	"github.com/google/uuid"
 	"time"
@@ -10,6 +9,8 @@ import (
 
 	"chuKu-chuKu-chat/internal/model"
 )
+
+const KickItBotUsername = "KickIt-bot"
 
 type DummyDb struct {
 	Channels map[string]model.Channel
@@ -22,21 +23,21 @@ func NewDummyDb(rdb *redis.Client) (*DummyDb, error) {
 	g := model.Channel{
 		Name:        "general",
 		Description: "general discussion",
-		Creator:     "admin",
+		Creator:     KickItBotUsername,
 	}
-	u := model.NewUser("admin", "#000000", "general")
+	u := model.NewUser(KickItBotUsername, "#000000", "general")
 	err := u.RefreshChannels(rdb)
 	if err != nil {
-		return nil, errors.New("error refreshing channels: " + err.Error())
+		return nil, errors.New("error refreshing channels in startup: " + err.Error())
 	}
 	msgs := []model.Msg{{
 		Id:        uuid.New().String(),
 		Content:   "Chatting started!",
 		Channel:   "general",
-		User:      "admin",
+		User:      KickItBotUsername,
+		UserColor: u.ColorCode,
 		Timestamp: time.Now(),
 	}}
-	msgs = append(msgs, common.GenerateRandomMessages("general", 29000, "admin")...)
 	return &DummyDb{
 		Channels: map[string]model.Channel{"general": g},
 		Users:    map[string]model.User{u.Username: *u},
@@ -69,6 +70,9 @@ func (d *DummyDb) GetChannels() ([]model.Channel, error) {
 func (d *DummyDb) ChannelLastMessages(channelName string, amount int) ([]model.Msg, error) {
 	if _, err := d.GetChannel(channelName); err != nil {
 		return []model.Msg{}, err
+	}
+	if amount >= len(d.Messages) {
+		return d.Messages, nil
 	}
 	return d.Messages[len(d.Messages)-amount-1:], nil
 }

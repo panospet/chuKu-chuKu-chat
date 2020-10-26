@@ -23,6 +23,7 @@ func GenerateRandomMessages(channelName string, amount int, users ...string) []m
 			Content:   babbler.Babble(),
 			Channel:   channelName,
 			User:      users[rand.Intn(len(users))],
+			UserColor: "#000000",
 			Timestamp: time.Now().Add(time.Duration(-rand.Intn(48)) * time.Hour),
 		})
 	}

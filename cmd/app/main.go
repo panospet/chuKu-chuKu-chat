@@ -1,10 +1,9 @@
 package main
 
 import (
+	"github.com/go-redis/redis/v7"
 	"log"
 	"os"
-
-	"github.com/go-redis/redis/v7"
 
 	"chuKu-chuKu-chat/config"
 	"chuKu-chuKu-chat/internal/api"

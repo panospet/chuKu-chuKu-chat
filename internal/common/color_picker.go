@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -178,7 +177,6 @@ func (c *ColorPicker) ChooseNext() string {
 }
 
 func GenerateColors() []string {
-	fmt.Println("color palette has finished, regenerating!")
 	var colors []string
 	palette := [][]string{Shuffle(mustard), Shuffle(gray), Shuffle(blue), Shuffle(red), Shuffle(green), Shuffle(pink),
 		Shuffle(yellow), Shuffle(orange), Shuffle(violet)}
