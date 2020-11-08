@@ -15,10 +15,14 @@ func main() {
 	if err != nil {
 		log.Fatalln("error creating new configuration:", err)
 	}
+	optRedis, err := redis.ParseURL(cfg.Redis)
+	if err != nil {
+		log.Fatalln("redis url could not be parsed")
+	}
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     cfg.Redis,
-		Password: "",
-		DB:       0,
+		Addr:     optRedis.Addr,
+		Password: optRedis.Password,
+		DB:       optRedis.DB,
 	})
 
 	postgresDb, err := db.NewPostgresDb(cfg.Dsn, rdb)

@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -20,9 +19,7 @@ type Config struct {
 }
 
 func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
-	}
+	godotenv.Load()
 }
 
 func NewConfig() (*Config, error) {
