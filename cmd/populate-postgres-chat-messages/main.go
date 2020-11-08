@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.NewConfig("./config/config.yml")
+	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Fatalln("error creating new configuration:", err)
 	}

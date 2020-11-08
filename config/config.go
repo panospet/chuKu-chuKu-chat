@@ -1,28 +1,57 @@
 package config
 
 import (
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"errors"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 const DummyMode = "dummy"
 const DbMode = "db"
 
 type Config struct {
-	Mode          string `yaml:"mode"`
-	Dsn           string `yaml:"dsn"`
-	Redis         string `yaml:"redis"`
-	NowPlayingUrl string `yaml:"nowPlayingUrl"`
+	Mode          string
+	Dsn           string
+	Redis         string
+	NowPlayingUrl string
 }
 
-func NewConfig(filePath string) (*Config, error) {
-	var ans Config
-	b, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return nil, err
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
 	}
-	if err = yaml.Unmarshal(b, &ans); err != nil {
-		return nil, err
+}
+
+func NewConfig() (*Config, error) {
+	mode, ok := os.LookupEnv("MODE")
+	if !ok {
+		return nil, errors.New("MODE does not exist in .env file")
 	}
-	return &ans, nil
+	if mode != DummyMode && mode != DbMode {
+		return nil, errors.New(fmt.Sprintf("MODE should have either value %s or %s", DummyMode, DbMode))
+	}
+	dsn := ""
+	if mode == DbMode {
+		dsn, ok = os.LookupEnv("DSN")
+		if !ok {
+			return nil, errors.New("DSN does not exist in .env file")
+		}
+	}
+	redis, ok := os.LookupEnv("REDIS")
+	if !ok {
+		return nil, errors.New("REDIS does not exist in .env file")
+	}
+	nowPlayingUrl, ok := os.LookupEnv("NOW_PLAYING_URL")
+	if !ok {
+		return nil, errors.New("NOW_PLAYING_URL does not exist in .env file")
+	}
+	return &Config{
+		Mode:          mode,
+		Dsn:           dsn,
+		Redis:         redis,
+		NowPlayingUrl: nowPlayingUrl,
+	}, nil
 }

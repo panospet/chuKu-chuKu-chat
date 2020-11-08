@@ -1,4 +1,0 @@
-mode: "dummy"
-dsn: "postgres://127.0.0.1/chukudb?sslmode=disable&user=postgres&password=password"
-redis: "localhost:6379"
-nowPlayingUrl: "http://radio.kickit.gr/api/nowplaying"

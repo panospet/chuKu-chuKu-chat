@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -23,7 +24,26 @@ func NewPostgresDb(dbPath string, rdb *redis.Client) (*PostgresDb, error) {
 	if err != nil {
 		return &PostgresDb{}, err
 	}
-	return &PostgresDb{Conn: db, rdb: rdb}, nil
+
+	appDb := PostgresDb{Conn: db, rdb: rdb}
+
+	if _, err := appDb.GetUser(KickItBotUsername); err != nil && err == sql.ErrNoRows {
+		u := model.NewUser(KickItBotUsername, "#000000", "general")
+		if err := appDb.AddUser(*u); err != nil {
+			return nil, err
+		}
+		if err := appDb.AddChannel(model.Channel{
+			Name:        "general",
+			Description: "general discussion",
+			Creator:     KickItBotUsername,
+			IsPrivate:   false,
+			CreatedAt:   time.Now(),
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	return &appDb, nil
 }
 
 func (o *PostgresDb) AddChannel(ch model.Channel) error {
@@ -111,7 +131,7 @@ func (o *PostgresDb) GetChannel(name string) (model.Channel, error) {
 	var c model.Channel
 	err := row.StructScan(&c)
 	if err != nil {
-		return model.Channel{}, errors.New(fmt.Sprintf("error getting channel: %s", err))
+		return model.Channel{}, errors.New(fmt.Sprintf("error getting channel with name %s: %s", name, err))
 	}
 	return c, nil
 }

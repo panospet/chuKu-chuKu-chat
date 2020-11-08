@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
-CONFIG_FILE ?= ./config/config.yml
-APP_DSN ?= $(shell sed -n 's/^dsn:[[:space:]]*"\(.*\)"/\1/p' $(CONFIG_FILE))
+CONFIG_FILE ?= .env
+APP_DSN ?= $(shell cat .env | grep DSN | awk -FDSN= '{ print $$2}')
 MIGRATE := docker run --rm -v $(shell pwd)/migrations:/migrations --network host --user $(id -u):$(id -g) migrate/migrate -path=/migrations/ -database "$(APP_DSN)"
 MIGRATE_CREATE := docker run --rm -v $(shell pwd)/migrations:/migrations --network host --user $(shell id -u):$(shell id -g) migrate/migrate create --seq -ext sql -dir /migrations/
 CWD := $(shell pwd)

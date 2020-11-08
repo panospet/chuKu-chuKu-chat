@@ -11,6 +11,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/jmoiron/sqlx v1.2.0
+	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.0.0
 	github.com/tjarratt/babble v0.0.0-20191209142150-eecdf8c2339d
 	golang.org/x/sys v0.0.0-20200615200032-f1bc736245b1 // indirect

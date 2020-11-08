@@ -121,9 +121,10 @@ func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client) error {
 	fmt.Println("Chat function with msg:", string(msgB))
 
 	go func() {
+		fmt.Println(msg)
 		err := a.db.AddMessage(msg)
 		if err != nil {
-			fmt.Println("ERROR: could not store message")
+			fmt.Println("ERROR: could not store message:", err)
 		}
 	}()
 

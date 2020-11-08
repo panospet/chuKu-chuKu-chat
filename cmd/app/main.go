@@ -1,22 +1,16 @@
 package main
 
 import (
-	"github.com/go-redis/redis/v7"
-	"log"
-	"os"
-
 	"chuKu-chuKu-chat/config"
 	"chuKu-chuKu-chat/internal/api"
 	"chuKu-chuKu-chat/internal/db"
 	"chuKu-chuKu-chat/internal/info_fetch"
+	"github.com/go-redis/redis/v7"
+	"log"
 )
 
 func main() {
-	cfgPath := os.Getenv("CONFIG_FILE")
-	if cfgPath == "" {
-		cfgPath = "./config/config.yml"
-	}
-	cfg, err := config.NewConfig(cfgPath)
+	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Fatalln("error creating new configuration:", err)
 	}
