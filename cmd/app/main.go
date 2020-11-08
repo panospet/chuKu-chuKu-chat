@@ -16,7 +16,6 @@ func main() {
 	}
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.Redis,
-		Password: "",
 		DB:       0,
 	})
 

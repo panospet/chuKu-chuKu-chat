@@ -5,5 +5,5 @@ RUN apt-get install -y wamerican
 ADD . .
 WORKDIR /api/cmd/app
 RUN go build -o chat
-ENTRYPOINT CONFIG_FILE=/api/config/docker-config.yml ./chat
+ENTRYPOINT ./chat
 EXPOSE 8000

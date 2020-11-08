@@ -21,7 +21,7 @@ type Config struct {
 
 func init() {
 	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
+		log.Fatalln("No .env file found")
 	}
 }
 
@@ -40,9 +40,9 @@ func NewConfig() (*Config, error) {
 			return nil, errors.New("DSN does not exist in .env file")
 		}
 	}
-	redis, ok := os.LookupEnv("REDIS")
+	redis, ok := os.LookupEnv("REDIS_URL")
 	if !ok {
-		return nil, errors.New("REDIS does not exist in .env file")
+		return nil, errors.New("REDIS_URL does not exist in .env file")
 	}
 	nowPlayingUrl, ok := os.LookupEnv("NOW_PLAYING_URL")
 	if !ok {
