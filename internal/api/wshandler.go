@@ -148,17 +148,18 @@ func (a *App) onChannelMessage(conn *websocket.Conn, u *model.User) {
 			if err != nil {
 				fmt.Println("ERROR unmashalling message:", err)
 			}
-			msg := model.Msg{
-				Content:   t.Content,
-				Channel:   t.Channel,
-				User:      t.User,
-				UserColor: t.UserColor,
-				Timestamp: t.Timestamp,
-			}
-			if err := conn.WriteJSON(msg); err != nil {
-				fmt.Println(err)
+			if t.Command == 2 {
+				msg := model.Msg{
+					Content:   t.Content,
+					Channel:   t.Channel,
+					User:      t.User,
+					UserColor: t.UserColor,
+					Timestamp: t.Timestamp,
+				}
+				if err := conn.WriteJSON(msg); err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
-
 	}()
 }
