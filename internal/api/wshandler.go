@@ -45,6 +45,21 @@ func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	a.onChannelMessage(conn, &u)
 
+	go func() {
+		defer func() {
+			a.db.RemoveUser(u.Username)
+			closeCh <- struct{}{}
+		}()
+		for true {
+			time.Sleep(15 * time.Minute)
+			us1, _ := a.db.GetUser(u.Username)
+			if !us1.LastMessageAt.IsZero() && us1.LastMessageAt.Before(time.Now().Add(-10*time.Hour)) {
+				fmt.Println(us1.Username, "last message earlier than 10 hours, FINISH HIM")
+				break
+			}
+		}
+	}()
+
 	a.BroadcastMessage(Payload{
 		Content:   fmt.Sprintf("Shout out to %s, who has just logged in!", u.Username),
 		Channel:   "general",
@@ -94,7 +109,6 @@ func (a *App) onDisconnect(conn *websocket.Conn, u *model.User) chan struct{} {
 
 		return nil
 	})
-	fmt.Println("connection closed for user", u.Username)
 	return closeCh
 }
 
@@ -118,15 +132,14 @@ func (a *App) onUserCommand(conn *websocket.Conn, rdb *redis.Client) error {
 		fmt.Println("ERROR CHAT:", err)
 		return err
 	}
-	fmt.Println("Chat function with msg:", string(msgB))
 
 	go func() {
-		fmt.Println(msg)
 		if msg.Command == 2 {
 			err := a.db.AddMessage(msg)
 			if err != nil {
 				fmt.Println("ERROR: could not store message:", err)
 			}
+			a.db.UpdateUserLastMessage(user.Username)
 		}
 	}()
 

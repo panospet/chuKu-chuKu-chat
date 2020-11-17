@@ -122,6 +122,13 @@ func (d *DummyDb) AddUser(user model.User) error {
 	return nil
 }
 
+func (d *DummyDb) UpdateUserLastMessage(username string) {
+	if u, ok := d.Users[username]; ok {
+		u.LastMessageAt = time.Now()
+		d.Users[username] = u
+	}
+}
+
 func (d *DummyDb) RemoveUser(username string) error {
 	if _, ok := d.Users[username]; !ok {
 		return errors.New("user does not exist")

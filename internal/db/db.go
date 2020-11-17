@@ -17,6 +17,7 @@ type DbI interface {
 	GetUser(name string) (model.User, error)
 	GetUsers() ([]model.User, error)
 	RemoveUser(username string) error
+	UpdateUserLastMessage(username string)
 
 	AddSubscription(username string, channelName string) error
 

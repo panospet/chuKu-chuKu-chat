@@ -196,6 +196,11 @@ utc.channel_id=ch.id and utc.user_id=u.id) from users u where u.name=$1`
 	return u, nil
 }
 
+// todo
+func (o *PostgresDb) UpdateUserLastMessage(name string) {
+	panic("not implemented")
+}
+
 func (o *PostgresDb) GetUsers() ([]model.User, error) {
 	q := `select u.id,u.name,u.created_at, array(select name from channels ch join user_to_channel utc on 
 utc.channel_id=ch.id and utc.user_id=u.id) from users u`

@@ -10,11 +10,12 @@ import (
 )
 
 type User struct {
-	Id        int       `json:"id" db:"id"`
-	Username  string    `json:"name" db:"name"`
-	Channels  []string  `json:"channels"`
-	CreatedAt time.Time `json:"createdAt" db:"created_at"`
-	ColorCode string    `json:"color_code"`
+	Id            int       `json:"id" db:"id"`
+	Username      string    `json:"name" db:"name"`
+	Channels      []string  `json:"channels"`
+	CreatedAt     time.Time `json:"createdAt" db:"created_at"`
+	ColorCode     string    `json:"color_code"`
+	LastMessageAt time.Time `json:"last_message_at"`
 
 	PubSub           *redis.PubSub      `json:"-"`
 	StopListenerChan chan struct{}      `json:"-"`
