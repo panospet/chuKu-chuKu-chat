@@ -1,7 +1,8 @@
-FROM golang:latest
+FROM golang:1.21.0
+
 WORKDIR /api
-RUN apt-get update
-RUN apt-get install -y wamerican
+RUN apt update
+RUN apt install -y wamerican
 ADD . .
 WORKDIR /api/cmd/app
 RUN go build -o chat

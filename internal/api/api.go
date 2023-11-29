@@ -1,7 +1,6 @@
 package api
 
 import (
-	"chuKu-chuKu-chat/internal/common"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -17,10 +16,11 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
-	"chuKu-chuKu-chat/config"
-	"chuKu-chuKu-chat/internal/db"
-	"chuKu-chuKu-chat/internal/info_fetch"
-	"chuKu-chuKu-chat/internal/model"
+	"chuku-chuku-chat/config"
+	"chuku-chuku-chat/internal/common"
+	"chuku-chuku-chat/internal/db"
+	"chuku-chuku-chat/internal/info_fetch"
+	"chuku-chuku-chat/internal/model"
 )
 
 type App struct {

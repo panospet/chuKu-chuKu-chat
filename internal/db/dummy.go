@@ -2,12 +2,13 @@ package db
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/go-redis/redis/v7"
 
-	"chuKu-chuKu-chat/internal/model"
+	"chuku-chuku-chat/internal/model"
 )
 
 const KickItBotUsername = "KickIt-bot"

@@ -12,8 +12,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 
-	"chuKu-chuKu-chat/internal/db"
-	"chuKu-chuKu-chat/internal/model"
+	"chuku-chuku-chat/internal/db"
+	"chuku-chuku-chat/internal/model"
 )
 
 func (a *App) chatWebSocketHandler(w http.ResponseWriter, r *http.Request) {

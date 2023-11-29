@@ -1,12 +1,14 @@
 package main
 
 import (
-	"chuKu-chuKu-chat/config"
-	"chuKu-chuKu-chat/internal/api"
-	"chuKu-chuKu-chat/internal/db"
-	"chuKu-chuKu-chat/internal/info_fetch"
-	"github.com/go-redis/redis/v7"
 	"log"
+
+	"github.com/go-redis/redis/v7"
+
+	"chuku-chuku-chat/config"
+	"chuku-chuku-chat/internal/api"
+	"chuku-chuku-chat/internal/db"
+	"chuku-chuku-chat/internal/info_fetch"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 
-	"chuKu-chuKu-chat/internal/model"
+	"chuku-chuku-chat/internal/model"
 )
 
 type DbI interface {

@@ -11,7 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 
-	"chuKu-chuKu-chat/internal/model"
+	"chuku-chuku-chat/internal/model"
 )
 
 type PostgresDb struct {

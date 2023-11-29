@@ -1,13 +1,14 @@
 package info_fetch
 
 import (
-	"chuKu-chuKu-chat/internal/model"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"chuku-chuku-chat/internal/model"
 )
 
 type Getter interface {

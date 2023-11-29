@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tjarratt/babble"
 
-	"chuKu-chuKu-chat/internal/model"
+	"chuku-chuku-chat/internal/model"
 )
 
 func GenerateRandomMessages(channelName string, amount int, users ...string) []model.Msg {
